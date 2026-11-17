@@ -340,7 +340,11 @@ function errMsg(e){
   return "Erreur : "+m;
 }
 
-/* ---------- tarifs ---------- */
+/* ---------- tarifs ----------
+   Au colis : le prix saisi est celui d'UNE BOTTE ; montant = colis × bottes par colis × prix de la botte. */
+const HAS_BPC=()=>S.legumes.some(l=>l.bottes_par_colis!=null);
+const bpc=l=>l&&l.mode==="colis"?(Number(l.bottes_par_colis)||1):1;
+const priceUnit=l=>l.mode==="heure"?"h":l.mode==="colis"?"botte":"unité";
 function priceAt(lid,date){let b=null;for(const t of S.tarifs)if(t.lid===String(lid)&&t.depuis<=date&&(!b||t.depuis>b.depuis))b=t;return b?b.prix:null}
 function smicAt(date){let b=null;for(const t of S.smic)if(t.depuis<=date&&(!b||t.depuis>b.depuis))b=t;return b?b.taux:null}
 const tarifsOf=lid=>S.tarifs.filter(t=>t.lid===String(lid)).sort((a,b)=>b.depuis.localeCompare(a.depuis));
@@ -349,7 +353,7 @@ function value(e){
   const v={tache:0,heure:0,total:0,colis:0,unites:0,hh:0,pres:presH(e.h),smicMin:0,missing:false};
   for(const [k,q] of Object.entries(e.q)){
     if(!(q>0))continue;const l=legById(k);if(!l)continue;
-    const p=priceAt(k,e.date);if(p==null)v.missing=true;const m=(p||0)*q;
+    const p=priceAt(k,e.date);if(p==null)v.missing=true;const m=(p||0)*q*bpc(l);
     if(l.mode==="heure"){v.hh+=q;v.heure+=m}else{v.tache+=m;if(l.mode==="colis")v.colis+=q;else v.unites+=q}
   }
   v.total=v.tache+v.heure;const sm=smicAt(e.date);if(sm)v.smicMin=v.pres*sm;
@@ -402,7 +406,7 @@ async function fetchDays(a,b){
 async function loadRef(){
   const [s,l]=await Promise.all([
     sb.from("saisonniers").select("id,nom,prenom,actif"),
-    sb.from("legumes").select("id,nom,nom_pt,mode,actif,ordre").order("ordre").order("id")]);
+    sb.from("legumes").select("*").order("ordre").order("id")]);
   if(s.error)throw s.error; if(l.error)throw l.error;
   S.saisonniers=s.data.map(x=>({...x,id:String(x.id)}));
   S.legumes=l.data.map(x=>({...x,id:String(x.id)})).sort((a,b)=>MODES.indexOf(a.mode)-MODES.indexOf(b.mode)||(a.ordre-b.ordre)||(a.id-b.id));
@@ -649,6 +653,7 @@ function viewSupervision(){
   const A=aggregate(S.range);
   if(!A.ents.length)return `<div class="stack">${head}<div class="panel"><h3>Aucune saisie sur cette période</h3><p class="muted">Les saisies des chefs d'équipe apparaissent ici en temps réel.</p></div></div>`;
   const notes=[];
+  if(!HAS_BPC())notes.push(`<div class="notice warn">Montants au colis incomplets : exécutez le fichier supabase/maj-04-bottes-par-colis.sql dans Supabase pour appliquer le nombre de bottes par colis.</div>`);
   if(A.missing)notes.push(`<div class="notice warn">Certains produits saisis n'ont pas de prix sur cette période : les montants sont incomplets. <button class="btn sm ghost" data-view="produits">Compléter les tarifs →</button></div>`);
   if(!S.smic.length)notes.push(`<div class="notice">Renseignez le SMIC horaire dans « Produits et tarifs » pour activer l'alerte SMIC.</div>`);
   const alerts=A.rows.filter(r=>r.alert).length;
@@ -738,8 +743,9 @@ function viewSaisonniers(){
 /* --- Produits et tarifs --- */
 function priceCell(l){
   const p=priceAt(l.id,today());const fut=tarifsOf(l.id).find(t=>t.depuis>today());
-  const u=l.mode==="heure"?"h":MODE_UNIT[l.mode];
-  return (p==null?`<span class="badge warn">Prix à définir</span>`:`<span class="eur">${fmtE(p)}</span> <span class="muted">/ ${u}</span>`)
+  const n=bpc(l);
+  return (p==null?`<span class="badge warn">Prix à définir</span>`:`<span class="eur">${fmtE(p)}</span> <span class="muted">/ ${priceUnit(l)}</span>`)
+    +(l.mode==="colis"?`<div class="muted" style="font-size:.75rem">${n} ${n>1?"bottes":"botte"} par colis${p!=null?" · "+fmtE(p*n)+" le colis":""}</div>`:"")
     +(fut?`<div class="muted" style="font-size:.75rem">${fmtE(fut.prix)} à partir du ${fmtDate(fut.depuis)}</div>`:"");
 }
 function viewProduits(){
@@ -755,7 +761,8 @@ function viewProduits(){
           <label class="f">Nom (français)<input id="el-nom" data-keep value="${F("el-nom")}" required></label>
           <label class="f">Nom (portugais)<input id="el-nompt" data-keep value="${F("el-nompt")}"></label>
           <label class="f">Mode de paie${modeSel("el-mode",S.form["el-mode"])}</label>
-          <label class="f">Nouveau prix (€)<input id="el-prix" data-keep type="number" inputmode="decimal" min="0" step="0.001" value="${F("el-prix")}" placeholder="inchangé"></label>
+          ${HAS_BPC()&&S.form["el-mode"]==="colis"?`<label class="f">Bottes par colis<input id="el-bpc" data-keep type="number" inputmode="numeric" min="1" step="1" value="${F("el-bpc")}" required></label>`:""}
+          <label class="f">Nouveau prix (€ / ${S.form["el-mode"]==="colis"?"botte":S.form["el-mode"]==="heure"?"heure":"unité"})<input id="el-prix" data-keep type="number" inputmode="decimal" min="0" step="0.001" value="${F("el-prix")}" placeholder="inchangé"></label>
           <label class="f">À partir du<input id="el-depuis" data-keep type="date" value="${F("el-depuis")}"></label>
           <div class="row" style="gap:8px"><button class="btn sm primary">Enregistrer</button><button type="button" class="btn sm" data-act="cfg-cancel">Annuler</button></div>
           <p class="muted" style="font-size:.8rem;grid-column:1/-1">${hist?"Historique des prix : "+esc(hist)+". ":"Aucun prix pour l'instant : le premier prix s'appliquera aussi aux saisies passées. "}Un nouveau prix ne change pas les jours avant sa date.</p>
@@ -771,6 +778,8 @@ function viewProduits(){
   const smHist=S.smic.slice().sort((a,b)=>b.depuis.localeCompare(a.depuis)).map(x=>fmtE(x.taux)+" depuis le "+fmtDate(x.depuis)).join(" · ");
   return `<div class="stack">
     <h2>Produits et tarifs</h2>
+    ${HAS_BPC()?"":`<div class="notice warn">Exécutez le fichier supabase/maj-04-bottes-par-colis.sql dans Supabase pour gérer le nombre de bottes par colis.</div>`}
+    <p class="muted">Au colis, le prix saisi est celui <b>d'une botte</b> : montant = nombre de colis × bottes par colis × prix de la botte.</p>
     <p class="muted">Les prix ne sont visibles que par les responsables. Le chef d'équipe ne voit que les noms des produits.</p>
     <div class="split" style="grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)">
       <section class="panel stack"><h3 style="margin:0">Ajouter un produit ou une tâche</h3>
@@ -778,7 +787,8 @@ function viewProduits(){
           <label class="f">Nom (français)<input id="l-nom" data-keep value="${F("l-nom")}" placeholder="Poireaux" required></label>
           <label class="f">Nom (portugais)<input id="l-nompt" data-keep value="${F("l-nompt")}" placeholder="Alho-francês"></label>
           <label class="f">Mode de paie${modeSel("l-mode",S.form["l-mode"]||"colis")}</label>
-          <label class="f">Prix (€)<input id="l-prix" data-keep type="number" inputmode="decimal" min="0" step="0.001" value="${F("l-prix")}" placeholder="0,00"></label>
+          ${HAS_BPC()&&(S.form["l-mode"]||"colis")==="colis"?`<label class="f">Bottes par colis<input id="l-bpc" data-keep type="number" inputmode="numeric" min="1" step="1" value="${F("l-bpc")}" placeholder="25"></label>`:""}
+          <label class="f">Prix (€ / ${(S.form["l-mode"]||"colis")==="colis"?"botte":S.form["l-mode"]==="heure"?"heure":"unité"})<input id="l-prix" data-keep type="number" inputmode="decimal" min="0" step="0.001" value="${F("l-prix")}" placeholder="0,00"></label>
           <button class="btn primary">Ajouter</button>
         </form>
       </section>
@@ -903,10 +913,10 @@ function printFiche(sid){
   for(const e of ents)for(const [k,q] of Object.entries(e.q)){
     if(!(q>0))continue;const pr=priceAt(k,e.date);
     const o=prod[k]||(prod[k]={q:0,m:0,prices:new Set(),missing:false});
-    o.q+=q;if(pr==null)o.missing=true;else{o.m+=pr*q;o.prices.add(pr)}
+    o.q+=q;if(pr==null)o.missing=true;else{o.m+=pr*q*bpc(legById(k));o.prices.add(pr)}
   }
   const prodRows=S.legumes.filter(l=>prod[l.id]).map(l=>{const o=prod[l.id];const u=l.mode==="heure"?"h":MODE_UNIT[l.mode];
-    const pu=o.missing?"à définir":o.prices.size===1?fmtE([...o.prices][0])+" / "+u:"variable";
+    const pu=(o.missing?"à définir":o.prices.size===1?fmtE([...o.prices][0])+" / "+priceUnit(l):"variable")+(l.mode==="colis"?` × ${bpc(l)} bottes`:"");
     return `<tr><td>${esc(l.nom)}</td><td>${MODE_LABEL[l.mode]}</td><td class="n">${fmtN(o.q)} ${l.mode==="heure"?"h":esc(unitShort(l.mode,o.q,"fr"))}</td><td class="n">${pu}</td><td class="n">${fmtE(o.m)}</td></tr>`}).join("");
   const days=ents.map(e=>{const h=e.h||{};return `<tr><td>${esc(fmtDay(e.date))}</td><td>${halfDay(h.md,h.mf)}</td><td>${halfDay(h.ad,h.af)}</td><td class="n">${e.v.pres?fmtH(e.v.pres):"—"}</td><td>${esc(summary({q:e.q,h:null},"fr"))||"—"}</td><td class="n">${fmtE(e.v.total)}</td></tr>`}).join("");
   const tile=(v,l)=>`<div><b>${v}</b>${l}</div>`;
@@ -980,17 +990,17 @@ function exportRows(){
   const paie=[["Nom","Prénom","Jours travaillés","Heures de présence","Colis","Unités","Heures à l'heure","Montant à la tâche (€)","Montant à l'heure (€)","Total (€)","Minimum SMIC (€)","Alerte"]];
   for(const r of A.rows){const p=who(r.sid);paie.push([p.nom.toUpperCase(),p.prenom,r.days.size,r2(r.pres),r.colis,r.unites,r2(r.hh),r2(r.tache),r2(r.heure),r2(r.total),r2(r.smicMin),r.alert?"Sous le SMIC":""])}
   paie.push(["TOTAL","","",r2(A.tot.pres),A.tot.colis,A.tot.unites,r2(A.tot.hh),r2(A.tot.tache),r2(A.tot.heure),r2(A.tot.total),r2(A.tot.smicMin),""]);
-  const detail=[["Date","Nom","Prénom","Matin début","Matin fin","Après-midi début","Après-midi fin","Présence (h)","Produit","Mode de paie","Quantité","Prix unitaire (€)","Montant (€)","Saisi par","Corrigé par"]];
+  const detail=[["Date","Nom","Prénom","Matin début","Matin fin","Après-midi début","Après-midi fin","Présence (h)","Produit","Mode de paie","Quantité","Bottes par colis","Prix (€ / botte, unité ou h)","Montant (€)","Saisi par","Corrigé par"]];
   for(const e of A.ents){const p=who(e.sid);const h=e.h||{};
     const base=[e.date,p.nom.toUpperCase(),p.prenom,h.md||"",h.mf||"",h.ad||"",h.af||"",r2(e.v.pres)];
     const end=[parName(e.par),e.corr?parName(e.corr):""];
     const ls=S.legumes.filter(l=>Number(e.q[l.id])>0);
-    if(!ls.length)detail.push([...base,"","","","","",...end]);
+    if(!ls.length)detail.push([...base,"","","","","","",...end]);
     ls.forEach((l,i)=>{const q=Number(e.q[l.id]);const pr=priceAt(l.id,e.date);
-      detail.push([...(i?[e.date,p.nom.toUpperCase(),p.prenom,"","","","",""]:base),l.nom,MODE_LABEL[l.mode],q,pr==null?"":pr,pr==null?"":r2(pr*q),...end])});
+      detail.push([...(i?[e.date,p.nom.toUpperCase(),p.prenom,"","","","",""]:base),l.nom,MODE_LABEL[l.mode],q,l.mode==="colis"?bpc(l):"",pr==null?"":pr,pr==null?"":r2(pr*q*bpc(l)),...end])});
   }
-  const tarifs=[["Produit","Portugais","Mode de paie","Prix (€)","À partir du"]];
-  for(const l of S.legumes)for(const t of tarifsOf(l.id).slice().reverse())tarifs.push([l.nom,l.nom_pt||"",MODE_LABEL[l.mode],t.prix,t.depuis===PRIX_ORIGINE?"":t.depuis]);
+  const tarifs=[["Produit","Portugais","Mode de paie","Prix (€ / botte, unité ou h)","Bottes par colis","Prix du colis (€)","À partir du"]];
+  for(const l of S.legumes)for(const t of tarifsOf(l.id).slice().reverse())tarifs.push([l.nom,l.nom_pt||"",MODE_LABEL[l.mode],t.prix,l.mode==="colis"?bpc(l):"",l.mode==="colis"?r2(t.prix*bpc(l)):"",t.depuis===PRIX_ORIGINE?"":t.depuis]);
   tarifs.push([]);tarifs.push(["SMIC horaire brut","","",""," "]);
   for(const s of S.smic.slice().sort((x,y)=>x.depuis.localeCompare(y.depuis)))tarifs.push(["SMIC","","",s.taux,s.depuis]);
   return {paie,detail,tarifs,tag:S.period==="mois"?a.slice(0,7):a+"_"+b,a,b};
@@ -1006,9 +1016,9 @@ function doXlsx(){
   const ws1=XLSX.utils.aoa_to_sheet(head.concat(R.paie));
   ws1["!cols"]=[{wch:20},{wch:16},...R.paie[0].slice(2).map(()=>({wch:17}))];
   XLSX.utils.book_append_sheet(wb,ws1,"Paie");
-  const ws2=XLSX.utils.aoa_to_sheet(R.detail);ws2["!cols"]=[{wch:12},{wch:18},{wch:14},{wch:11},{wch:11},{wch:11},{wch:11},{wch:11},{wch:18},{wch:12},{wch:10},{wch:12},{wch:12},{wch:18},{wch:18}];
+  const ws2=XLSX.utils.aoa_to_sheet(R.detail);ws2["!cols"]=[{wch:12},{wch:18},{wch:14},{wch:11},{wch:11},{wch:11},{wch:11},{wch:11},{wch:18},{wch:12},{wch:10},{wch:10},{wch:14},{wch:12},{wch:18},{wch:18}];
   XLSX.utils.book_append_sheet(wb,ws2,"Détail");
-  const ws3=XLSX.utils.aoa_to_sheet(R.tarifs);ws3["!cols"]=[{wch:20},{wch:18},{wch:14},{wch:10},{wch:12}];
+  const ws3=XLSX.utils.aoa_to_sheet(R.tarifs);ws3["!cols"]=[{wch:20},{wch:18},{wch:14},{wch:16},{wch:12},{wch:14},{wch:12}];
   XLSX.utils.book_append_sheet(wb,ws3,"Tarifs");
   const buf=XLSX.write(wb,{bookType:"xlsx",type:"array"});
   saveBlob("Paie_SCEA-Guidal_"+R.tag+".xlsx",new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));
@@ -1076,7 +1086,7 @@ document.addEventListener("click",async e=>{
   if(t.dataset.move){const [id,dir]=t.dataset.move.split("|");moveLegume(id,Number(dir));return}
   if(t.dataset.toggleS){const p=S.saisonniers.find(x=>x.id===t.dataset.toggleS);if(await run(sb.from("saisonniers").update({actif:!p.actif}).eq("id",Number(p.id)),p.actif?"Marqué parti":"Réactivé")){await loadRef();render()}return}
   if(t.dataset.toggleL){const l=S.legumes.find(x=>x.id===t.dataset.toggleL);if(await run(sb.from("legumes").update({actif:!l.actif}).eq("id",Number(l.id)))){await loadRef();render()}return}
-  if(t.dataset.editL){const l=S.legumes.find(x=>x.id===t.dataset.editL);S.editCfg={kind:"l",id:l.id};S.form["el-nom"]=l.nom;S.form["el-nompt"]=l.nom_pt||"";S.form["el-mode"]=l.mode;S.form["el-prix"]="";S.form["el-depuis"]=today();render();return}
+  if(t.dataset.editL){const l=S.legumes.find(x=>x.id===t.dataset.editL);S.editCfg={kind:"l",id:l.id};S.form["el-nom"]=l.nom;S.form["el-nompt"]=l.nom_pt||"";S.form["el-mode"]=l.mode;S.form["el-bpc"]=l.bottes_par_colis||1;S.form["el-prix"]="";S.form["el-depuis"]=today();render();return}
   if(t.dataset.editU){const p=S.profils.find(x=>x.id===t.dataset.editU);S.editCfg={kind:"u",id:p.id};S.form["eu-nom"]=p.nom;S.form["eu-ident"]=p.identifiant;S.form["eu-role"]=p.role;render();return}
   if(t.dataset.pw){S.editCfg={kind:"pw",id:t.dataset.pw};S.form["pw-new"]="";render();return}
   if(t.dataset.toggleU){const p=S.profils.find(x=>x.id===t.dataset.toggleU);if(await run(sb.from("profils").update({actif:!p.actif}).eq("id",p.id),p.actif?"Compte désactivé":"Compte réactivé")){await loadProfils();render()}return}
@@ -1116,7 +1126,7 @@ document.addEventListener("change",e=>{
   const t=e.target;
   if(t.id==="f-date"&&t.value){S.date=t.value;S.selected=null;S.day=null;loadDay()}
   else if(t.dataset&&t.dataset.h){S.hdraft[t.dataset.h]=t.value;updMeter()}
-  else if(t.dataset&&"keep" in t.dataset){S.form[t.id]=t.value}
+  else if(t.dataset&&"keep" in t.dataset){S.form[t.id]=t.value;if(t.id==="l-mode"||t.id==="el-mode")render()}
 });
 document.addEventListener("submit",async e=>{
   const f=e.target;if(f.closest("dialog"))return;
@@ -1128,14 +1138,15 @@ document.addEventListener("submit",async e=>{
       if(await run(sb.from("saisonniers").insert({nom,prenom}),prenom+" "+nom+" ajouté(e)")){S.form["s-nom"]=S.form["s-prenom"]="";await loadRef();render()}break}
     case "form-l":{const nom=v("l-nom").trim(),nom_pt=v("l-nompt").trim()||null,mode=v("l-mode")||"colis",prixTxt=v("l-prix");if(!nom)return;
       const ordre=MODES.indexOf(mode)*100+S.legumes.filter(l=>l.mode===mode).length+1;
-      if(!await run(sb.from("legumes").insert({nom,nom_pt,mode,ordre})))break;
+      const row={nom,nom_pt,mode,ordre};if(HAS_BPC())row.bottes_par_colis=mode==="colis"?Math.max(1,Math.round(Number(v("l-bpc"))||1)):1;
+      if(!await run(sb.from("legumes").insert(row)))break;
       await loadRef();
       if(prixTxt!==""){const l=S.legumes.filter(x=>x.nom===nom&&x.mode===mode).sort((a,b)=>b.id-a.id)[0];if(l)await run(setPrice(l.id,Math.max(0,Number(prixTxt)),PRIX_ORIGINE))}
-      toast(nom+" ajouté");S.form["l-nom"]=S.form["l-nompt"]=S.form["l-prix"]="";await loadRef();render();break}
+      toast(nom+" ajouté");S.form["l-nom"]=S.form["l-nompt"]=S.form["l-prix"]=S.form["l-bpc"]="";await loadRef();render();break}
     case "form-es":{const nom=v("es-nom").trim(),prenom=v("es-prenom").trim();if(!nom||!prenom)return;
       if(await run(sb.from("saisonniers").update({nom,prenom}).eq("id",Number(f.dataset.id)),"Saisonnier modifié")){await loadRef();render()}break}
     case "form-el":{const id=f.dataset.id,nom=v("el-nom").trim(),nom_pt=v("el-nompt").trim()||null,mode=v("el-mode"),prixTxt=v("el-prix"),depuis=v("el-depuis")||today();if(!nom)return;
-      const l=legById(id);const upd={nom,nom_pt,mode};if(l&&l.mode!==mode)upd.ordre=MODES.indexOf(mode)*100+S.legumes.filter(x=>x.mode===mode).length+1;
+      const l=legById(id);const upd={nom,nom_pt,mode};if(HAS_BPC())upd.bottes_par_colis=mode==="colis"?Math.max(1,Math.round(Number(v("el-bpc"))||(l&&l.bottes_par_colis)||1)):1;if(l&&l.mode!==mode)upd.ordre=MODES.indexOf(mode)*100+S.legumes.filter(x=>x.mode===mode).length+1;
       if(!await run(sb.from("legumes").update(upd).eq("id",Number(id))))break;
       if(prixTxt!==""&&!await run(setPrice(id,Math.max(0,Number(prixTxt)),depuis)))break;
       toast(prixTxt!==""?"Produit et prix enregistrés":"Produit modifié");S.editCfg=null;await loadRef();render();break}

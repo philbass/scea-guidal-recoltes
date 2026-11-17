@@ -21,11 +21,11 @@ function seed(){
     legumes:[["Radis","Rabanete","colis"],["Oignons blancs","Cebola branca","colis"],["Oignons rouges","Cebola roxa","colis"],["Ciboule","Cebolinho","colis"],["Persil","Salsa","colis"],
       ["Persil scotch","Salsa scotch","unite"],["Épluchage","Descasque","heure"],["Plantation","Plantação","heure"],["Binage","Sacha","heure"],["Chou-fleur","Couve-flor","heure"],
       ["Chou vert","Couve verde","heure"],["Chou blanc","Couve branca","heure"],["Chou rouge","Couve roxa","heure"],["Courgette","Curgete","heure"],["Panais","Pastinaca","heure"],
-      ["Céleri branche","Aipo","heure"],["Brocoli","Brócolos","heure"]].map(([nom,nom_pt,mode],i)=>({id:i+1,nom,nom_pt,mode,actif:true,ordre:i+1})),
+      ["Céleri branche","Aipo","heure"],["Brocoli","Brócolos","heure"]].map(([nom,nom_pt,mode],i)=>({id:i+1,nom,nom_pt,mode,actif:true,ordre:i+1,bottes_par_colis:[25,15,15,12,40][i]||1})),
     tarifs:[],smic:[],recoltes:[],presences:[]};
   const now=new Date(),y=now.getFullYear(),m=now.getMonth();
   const start=iso(new Date(y,m-1,1));
-  const prix={1:7,2:6.5,3:6.5,4:6,5:6,6:0.35};
+  const prix={1:0.28,2:0.43,3:0.43,4:0.5,5:0.15,6:0.35}; /* au colis : prix d'une botte */
   for(let id=1;id<=17;id++)db.tarifs.push({id:db._id++,legume_id:id,prix:prix[id]||12,depuis:start});
   db.smic.push({depuis:start,taux:12});
   for(let d=new Date(y,m-1,1);d<=now;d.setDate(d.getDate()+1)){
@@ -49,7 +49,7 @@ function seed(){
 }
 let db;
 try{db=JSON.parse(localStorage.getItem(KEY))}catch(e){}
-if(!db||!db.presences)db=seed();
+if(!db||!db.presences||!db.legumes.length||db.legumes[0].bottes_par_colis==null)db=seed();
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){}};
 save();
 
