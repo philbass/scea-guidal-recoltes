@@ -30,7 +30,7 @@ Contenu du dossier :
 
 Cela crée les tables (saisonniers, produits, récoltes, comptes) et les droits d'accès.
 
-4. Faites de même avec `supabase/maj-01-identifiant.sql`, puis `supabase/maj-02-paie.sql`. Ce dernier ajoute les horaires, les modes de paie, les tarifs, le SMIC, ainsi que les 17 produits.
+4. Faites de même avec `supabase/maj-01-identifiant.sql`, `supabase/maj-02-paie.sql`, puis `supabase/maj-03-suppression-saisonnier.sql`. Ce dernier ajoute les horaires, les modes de paie, les tarifs, le SMIC, ainsi que les 17 produits.
 
 ## Étape 3 — Régler la connexion
 
@@ -99,6 +99,8 @@ Certaines évolutions de l'app demandent d'ajouter une fonction dans Supabase. L
 |---|---|---|
 | `maj-01-identifiant.sql` | Changer l'identifiant de connexion d'un compte | Toujours, après `schema.sql` |
 | `maj-02-paie.sql` | Horaires matin et après-midi, paie au colis, à l'unité ou à l'heure, tarifs datés, SMIC, noms en portugais | Toujours, après `maj-01`. **Attention : efface les anciens produits et toutes les saisies de récolte déjà faites.** À exécuter juste avant de publier la version qui va avec. |
+
+| `maj-03-suppression-saisonnier.sql` | Supprimer définitivement un saisonnier, avec toutes ses saisies | Toujours, après `maj-02`. N'efface rien au moment de l'exécution. |
 
 Exécutez les fichiers dans l'ordre de leur numéro.
 

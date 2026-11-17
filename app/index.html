@@ -188,6 +188,32 @@ dialog .db{padding:16px 18px;display:flex;flex-direction:column;gap:12px}
   .stepper input{width:70px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+/* Fiche de travail imprimable */
+#printzone{display:none}
+@media print{
+  @page{size:A4;margin:14mm}
+  html,body{background:#fff!important;color:#111!important;min-height:0}
+  body>*:not(#printzone){display:none!important}
+  #printzone{display:block!important;font-family:var(--body);color:#111;font-size:10.5pt}
+  .pf h1{font-family:var(--display);color:#1E4736;margin:0;font-size:20pt}
+  .pf h2{font-family:var(--display);color:#1E4736;font-size:12.5pt;margin:16px 0 6px}
+  .pf-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;border-bottom:3px solid #1E4736;padding-bottom:8px}
+  .pf-tag{font-size:8pt;letter-spacing:.12em;text-transform:uppercase;color:#C61D2D;font-weight:700}
+  .pf-who{text-align:right;font-size:11pt}
+  .pf-small{font-size:8.5pt;color:#555}
+  .pf-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:12px}
+  .pf-tiles div{border:1px solid #bbb;border-radius:6px;padding:6px 8px;font-size:8.5pt;color:#444}
+  .pf-tiles b{display:block;font-size:14pt;color:#1E4736;font-family:var(--display)}
+  .pf table{width:100%;border-collapse:collapse;font-size:9pt}
+  .pf th,.pf td{border-bottom:1px solid #ccc;padding:4px 6px;text-align:left;white-space:normal;color:#111;background:none}
+  .pf th{background:#F2EFE6!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:7.5pt;text-transform:uppercase;letter-spacing:.04em;color:#444}
+  .pf td.n,.pf th.n{text-align:right;font-variant-numeric:tabular-nums}
+  .pf tr.tot td{font-weight:700;border-top:2px solid #1E4736;background:none}
+  .pf-alert{border:1px solid #C61D2D;color:#C61D2D;padding:6px 8px;border-radius:6px;margin-top:10px}
+  .pf-sign{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:28px;break-inside:avoid}
+  .pf-sign div{border-top:1px solid #999;padding-top:4px;height:64px;font-size:8.5pt;color:#555}
+  .pf tr{break-inside:avoid}
+}
 </style>
 </head>
 <body>
@@ -206,6 +232,7 @@ dialog .db{padding:16px 18px;display:flex;flex-direction:column;gap:12px}
 
 <div id="root"><div class="splash" role="status" aria-label="Chargement de l'application"><svg class="em" aria-hidden="true"><use href="#radis"/></svg><div class="ttl">SCEA Guidal</div><div class="tg">Suivi des récoltes</div><div class="dots" aria-hidden="true"><i></i><i></i><i></i></div><div class="field" aria-hidden="true"><svg viewBox="0 0 260 100" preserveAspectRatio="none"><path d="M0 20 Q130 6 260 20M0 42 Q130 28 260 42M0 64 Q130 50 260 64M0 86 Q130 72 260 86" stroke="#2F6B3E" stroke-width="6" fill="none"/></svg></div><div class="ft">Terroir &amp; Fraîcheur · Bouafle · depuis 1995</div></div></div>
 <dialog id="dlg"></dialog>
+<div id="printzone"></div>
 <div class="toast" id="toast" role="status" hidden></div>
 
 <script src="config.js"></script>
@@ -308,6 +335,7 @@ function errMsg(e){
   if(/Failed to fetch|NetworkError|network/i.test(m))return "Pas de connexion internet. Réessayez dans un instant.";
   if(/changer_identifiant/i.test(m))return "La base doit être mise à jour : exécutez le fichier supabase/maj-01-identifiant.sql dans Supabase (voir le guide).";
   if(/enregistrer_journee|presences|tarifs|smic|nom_pt|column .*mode/i.test(m))return "La base doit être mise à jour : exécutez le fichier supabase/maj-02-paie.sql dans Supabase (voir le guide).";
+  if(/foreign key|violates foreign/i.test(m))return "La base doit être mise à jour : exécutez le fichier supabase/maj-03-suppression-saisonnier.sql dans Supabase (voir le guide).";
   if(/Réservé|caractères|Identifiant invalide|existe déjà|introuvable/.test(m))return m;
   return "Erreur : "+m;
 }
@@ -639,9 +667,10 @@ function viewSupervision(){
   const paie=A.rows.map(r=>`<tr><td>${esc(personName(r.sid))}</td><td class="n">${r.days.size}</td><td class="n">${fmtN(r.pres)}</td>
     <td class="n ${r.colis?"":"zero"}">${fmtN(r.colis)}</td><td class="n ${r.unites?"":"zero"}">${fmtN(r.unites)}</td><td class="n ${r.hh?"":"zero"}">${fmtN(r.hh)}</td>
     <td class="n">${fmtE(r.tache)}</td><td class="n">${fmtE(r.heure)}</td><td class="n eur">${fmtE(r.total)}</td>
-    <td>${r.alert?`<span class="badge warn" title="Minimum SMIC : ${fmtE(r.smicMin)} pour ${fmtN(r.pres)} h de présence">⚠ sous le SMIC (${fmtE(r.smicMin)})</span>`:""}</td></tr>`).join("");
+    <td>${r.alert?`<span class="badge warn" title="Minimum SMIC : ${fmtE(r.smicMin)} pour ${fmtN(r.pres)} h de présence">⚠ sous le SMIC (${fmtE(r.smicMin)})</span>`:""}</td>
+    <td><button class="btn ico" data-print="${r.sid}" title="Imprimer la fiche de travail" aria-label="Imprimer la fiche de travail de ${esc(personName(r.sid))}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-4px"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></button></td></tr>`).join("");
   const T0=A.tot;
-  const foot=`<tr><td>Total</td><td></td><td class="n">${fmtN(T0.pres)}</td><td class="n">${fmtN(T0.colis)}</td><td class="n">${fmtN(T0.unites)}</td><td class="n">${fmtN(T0.hh)}</td><td class="n">${fmtE(T0.tache)}</td><td class="n">${fmtE(T0.heure)}</td><td class="n">${fmtE(T0.total)}</td><td></td></tr>`;
+  const foot=`<tr><td>Total</td><td></td><td class="n">${fmtN(T0.pres)}</td><td class="n">${fmtN(T0.colis)}</td><td class="n">${fmtN(T0.unites)}</td><td class="n">${fmtN(T0.hh)}</td><td class="n">${fmtE(T0.tache)}</td><td class="n">${fmtE(T0.heure)}</td><td class="n">${fmtE(T0.total)}</td><td></td><td></td></tr>`;
   const th=A.legs.map(l=>`<th class="n">${esc(l.nom)} <span style="text-transform:none">(${MODE_UNIT[l.mode]==="heure"?"h":esc(MODE_UNIT[l.mode])})</span></th>`).join("");
   const qrows=A.rows.map(r=>`<tr><td>${esc(personName(r.sid))}</td>${A.legs.map(l=>`<td class="n ${r.q[l.id]?"":"zero"}">${fmtN(r.q[l.id])}</td>`).join("")}</tr>`).join("");
   const qfoot=`<tr><td>Total</td>${A.legs.map(l=>`<td class="n">${fmtN(A.qtot[l.id])}</td>`).join("")}</tr>`;
@@ -649,7 +678,7 @@ function viewSupervision(){
     ${notes.join("")}
     <div class="tiles">${tiles}</div>
     <div><h3>Saisies journalières</h3><div class="tscroll"><table><thead><tr><th>Date</th><th>Saisonnier</th><th>Matin</th><th>Après-midi</th><th class="n">Présence</th><th>Réalisé</th><th class="n">Montant</th><th>Saisi par</th><th></th></tr></thead><tbody>${det}</tbody></table></div></div>
-    <div><h3>Paie par saisonnier</h3><div class="tscroll"><table><thead><tr><th>Saisonnier</th><th class="n">Jours</th><th class="n">Présence (h)</th><th class="n">Colis</th><th class="n">Unités</th><th class="n">Heures à l'heure</th><th class="n">À la tâche</th><th class="n">À l'heure</th><th class="n">Total</th><th></th></tr></thead><tbody>${paie}</tbody><tfoot>${foot}</tfoot></table></div></div>
+    <div><h3>Paie par saisonnier</h3><div class="tscroll"><table><thead><tr><th>Saisonnier</th><th class="n">Jours</th><th class="n">Présence (h)</th><th class="n">Colis</th><th class="n">Unités</th><th class="n">Heures</th><th class="n">À la tâche</th><th class="n">À l'heure</th><th class="n">Total</th><th></th><th><span class="muted" style="text-transform:none">Fiche</span></th></tr></thead><tbody>${paie}</tbody><tfoot>${foot}</tfoot></table></div></div>
     <details><summary>Quantités par produit</summary><div class="tscroll"><table><thead><tr><th>Saisonnier</th>${th}</tr></thead><tbody>${qrows}</tbody><tfoot>${qfoot}</tfoot></table></div></details>
   </div>`;
 }
@@ -677,6 +706,7 @@ function viewSaisonniers(){
         <button class="btn primary">Enregistrer</button>
       </form>
       <div class="row"><button class="btn sm" data-toggle-s="${sel.id}">${sel.actif?"Marquer parti":"Réactiver"}</button><span class="muted" style="font-size:.8rem">Un saisonnier parti n'apparaît plus dans la saisie. Son historique est conservé.</span></div>
+      <div class="row"><button class="btn sm danger" data-del-s="${sel.id}">Supprimer définitivement</button><span class="muted" style="font-size:.8rem">Efface aussi toutes ses saisies.</span></div>
       <div style="border-top:1px solid var(--line);padding-top:14px" class="stack">
         <h3 style="margin:0;text-transform:capitalize">${esc(monthLabel(today()))}</h3>
         ${r?`<div class="tiles" style="grid-template-columns:repeat(auto-fill,minmax(120px,1fr))">
@@ -838,6 +868,70 @@ function openEdit(date,sid){
     d.close();toast("Saisie corrigée");loadDay();loadRange();loadMois();
   };
 }
+/* ---------- suppression définitive d'un saisonnier ---------- */
+function openDelS(id){
+  const p=S.saisonniers.find(x=>x.id===id);if(!p)return;
+  const d=document.getElementById("dlg");
+  d.innerHTML=`<div class="dh"><h3>Supprimer définitivement</h3><div style="font-size:.85rem;opacity:.85">${esc(p.prenom)} ${esc(p.nom.toUpperCase())}</div></div>
+   <div class="db">
+    <p>Le saisonnier et <b>toutes ses saisies</b> (horaires et récoltes, sur tous les mois) seront effacés. Ses montants disparaîtront aussi des tableaux et des exports. <b>Cette action est impossible à annuler.</b></p>
+    <p class="muted" style="font-size:.85rem">Pour le retirer de la saisie en gardant son historique, utilisez plutôt « Marquer parti ».</p>
+    <label class="f">Pour confirmer, tapez SUPPRIMER<input id="ds-ok" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
+    <div class="row between"><button type="button" class="btn" id="ds-cancel">Annuler</button><button type="button" class="btn validate" id="ds-go" disabled>Supprimer définitivement</button></div>
+   </div>`;
+  const ok=d.querySelector("#ds-ok"),go=d.querySelector("#ds-go");
+  ok.oninput=()=>{go.disabled=ok.value.trim().toUpperCase()!=="SUPPRIMER"};
+  d.querySelector("#ds-cancel").onclick=()=>d.close();
+  go.onclick=async()=>{
+    go.disabled=true;go.textContent="Suppression…";
+    const {data,error}=await sb.from("saisonniers").delete().eq("id",Number(id)).select("id");
+    if(error){go.textContent="Supprimer définitivement";go.disabled=false;return toast(errMsg(error),true)}
+    if(!data||!data.length){d.close();return toast("La base doit être mise à jour : exécutez le fichier supabase/maj-03-suppression-saisonnier.sql dans Supabase (voir le guide).",true)}
+    d.close();S.selS=null;toast(p.prenom+" "+p.nom.toUpperCase()+" a été supprimé(e)");
+    await loadRef();render();loadDay();loadRange();loadMois();
+  };
+  d.showModal();ok.focus();
+}
+
+/* ---------- fiche de travail imprimable ---------- */
+function printFiche(sid){
+  const A=aggregate(S.range);const r=A.rows.find(x=>x.sid===sid);if(!r)return;
+  const p=S.saisonniers.find(x=>x.id===sid)||{nom:"Saisonnier retiré",prenom:""};
+  const [a,b]=periodRange();
+  const ents=A.ents.filter(e=>e.sid===sid);
+  const prod={};
+  for(const e of ents)for(const [k,q] of Object.entries(e.q)){
+    if(!(q>0))continue;const pr=priceAt(k,e.date);
+    const o=prod[k]||(prod[k]={q:0,m:0,prices:new Set(),missing:false});
+    o.q+=q;if(pr==null)o.missing=true;else{o.m+=pr*q;o.prices.add(pr)}
+  }
+  const prodRows=S.legumes.filter(l=>prod[l.id]).map(l=>{const o=prod[l.id];const u=l.mode==="heure"?"h":MODE_UNIT[l.mode];
+    const pu=o.missing?"à définir":o.prices.size===1?fmtE([...o.prices][0])+" / "+u:"variable";
+    return `<tr><td>${esc(l.nom)}</td><td>${MODE_LABEL[l.mode]}</td><td class="n">${fmtN(o.q)} ${l.mode==="heure"?"h":esc(unitShort(l.mode,o.q,"fr"))}</td><td class="n">${pu}</td><td class="n">${fmtE(o.m)}</td></tr>`}).join("");
+  const days=ents.map(e=>{const h=e.h||{};return `<tr><td>${esc(fmtDay(e.date))}</td><td>${halfDay(h.md,h.mf)}</td><td>${halfDay(h.ad,h.af)}</td><td class="n">${e.v.pres?fmtH(e.v.pres):"—"}</td><td>${esc(summary({q:e.q,h:null},"fr"))||"—"}</td><td class="n">${fmtE(e.v.total)}</td></tr>`}).join("");
+  const tile=(v,l)=>`<div><b>${v}</b>${l}</div>`;
+  document.getElementById("printzone").innerHTML=`<div class="pf">
+    <div class="pf-head"><div><div class="pf-tag">SCEA Guidal · Bouafle</div><h1>Fiche de travail</h1></div>
+      <div class="pf-who"><b>${esc(p.nom.toUpperCase())} ${esc(p.prenom)}</b><br><span style="text-transform:capitalize">${esc(periodLabel())}</span><br><span class="pf-small">du ${esc(fmtDate(a))} au ${esc(fmtDate(b))}</span></div></div>
+    <div class="pf-tiles">${tile(r.days.size,"jours travaillés")}${tile(fmtH(r.pres),"de présence")}${tile(fmtN(r.colis),"colis")}${r.unites?tile(fmtN(r.unites),"unités"):""}${tile(fmtN(r.hh)+" h","à l'heure")}${tile(fmtE(r.total),"total")}</div>
+    <h2>Montants</h2>
+    <table><tbody>
+      <tr><td>Travail à la tâche (colis et unités)</td><td class="n">${fmtE(r.tache)}</td></tr>
+      <tr><td>Travail à l'heure</td><td class="n">${fmtE(r.heure)}</td></tr>
+      <tr class="tot"><td>Total</td><td class="n">${fmtE(r.total)}</td></tr>
+      ${r.smicMin?`<tr><td class="pf-small">Minimum SMIC pour ${esc(fmtH(r.pres))} de présence</td><td class="n pf-small">${fmtE(r.smicMin)}</td></tr>`:""}
+    </tbody></table>
+    ${r.alert?`<div class="pf-alert">⚠ Le total est inférieur au minimum SMIC (${fmtE(r.smicMin)}).</div>`:""}
+    ${A.missing&&ents.some(e=>e.v.missing)?`<div class="pf-alert">Certains prix ne sont pas définis : montants incomplets.</div>`:""}
+    ${prodRows?`<h2>Par produit</h2><table><thead><tr><th>Produit</th><th>Mode de paie</th><th class="n">Quantité</th><th class="n">Prix</th><th class="n">Montant</th></tr></thead><tbody>${prodRows}</tbody></table>`:""}
+    <h2>Par jour</h2><table><thead><tr><th>Date</th><th>Matin</th><th>Après-midi</th><th class="n">Présence</th><th>Réalisé</th><th class="n">Montant</th></tr></thead><tbody>${days}</tbody>
+      <tfoot><tr class="tot"><td>Total</td><td></td><td></td><td class="n">${fmtH(r.pres)}</td><td></td><td class="n">${fmtE(r.total)}</td></tr></tfoot></table>
+    <div class="pf-sign"><div>Signature du saisonnier</div><div>Signature du responsable</div></div>
+    <div class="pf-small" style="margin-top:10px">Édité le ${esc(new Intl.DateTimeFormat("fr-FR",{dateStyle:"long",timeStyle:"short"}).format(new Date()))} par ${esc(S.profil.nom)}</div>
+  </div>`;
+  window.print();
+}
+
 /* contrôle des horaires (renvoie un message d'erreur ou rien) */
 function checkHours(h,q,lang){
   const t=k=>I18N[lang][k];
@@ -977,6 +1071,8 @@ document.addEventListener("click",async e=>{
   if(t.dataset.period){S.period=t.dataset.period;loadRange();return}
   if(t.dataset.sfilter){S.sFilter=t.dataset.sfilter;render();return}
   if(t.dataset.edit){const [d,s]=t.dataset.edit.split("|");openEdit(d,s);return}
+  if(t.dataset.print){printFiche(t.dataset.print);return}
+  if(t.dataset.delS){openDelS(t.dataset.delS);return}
   if(t.dataset.move){const [id,dir]=t.dataset.move.split("|");moveLegume(id,Number(dir));return}
   if(t.dataset.toggleS){const p=S.saisonniers.find(x=>x.id===t.dataset.toggleS);if(await run(sb.from("saisonniers").update({actif:!p.actif}).eq("id",Number(p.id)),p.actif?"Marqué parti":"Réactivé")){await loadRef();render()}return}
   if(t.dataset.toggleL){const l=S.legumes.find(x=>x.id===t.dataset.toggleL);if(await run(sb.from("legumes").update({actif:!l.actif}).eq("id",Number(l.id)))){await loadRef();render()}return}

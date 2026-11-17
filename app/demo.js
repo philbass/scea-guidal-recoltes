@@ -119,7 +119,9 @@ class Q{
     }
     if(this.op==="delete"){
       for(const r of match)if(!chefDateOk(t,r.date))return err("permission denied");
-      db[t]=rows.filter(r=>!match.includes(r));save();return {data:null,error:null};
+      db[t]=rows.filter(r=>!match.includes(r));
+      if(t==="saisonniers"){const ids=match.map(r=>String(r.id));for(const k of ["recoltes","presences"])db[k]=db[k].filter(r=>!ids.includes(String(r.saisonnier_id)))}
+      save();return {data:this.ret?match.map(r=>({id:r.id})):null,error:null};
     }
   }
 }
