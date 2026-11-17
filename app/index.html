@@ -356,7 +356,7 @@ function value(e){
     const p=priceAt(k,e.date);if(p==null)v.missing=true;const m=(p||0)*q*bpc(l);
     if(l.mode==="heure"){v.hh+=q;v.heure+=m}else{v.tache+=m;if(l.mode==="colis")v.colis+=q;else v.unites+=q}
   }
-  v.total=v.tache+v.heure;const sm=smicAt(e.date);if(sm)v.smicMin=v.pres*sm;
+  v.total=v.tache+v.heure;const sm=smicAt(e.date);if(sm)v.smicMin=v.hh*sm;
   return v;
 }
 
@@ -636,7 +636,7 @@ function aggregate(list){
     for(const [k,q] of Object.entries(e.q)){r.q[k]=(r.q[k]||0)+q;qtot[k]=(qtot[k]||0)+q}
   }
   const rows=Object.values(by).sort((a,b)=>personName(a.sid).localeCompare(personName(b.sid),"fr"));
-  for(const r of rows)r.alert=r.smicMin>0&&r.total+0.005<r.smicMin;
+  for(const r of rows)r.alert=r.smicMin>0&&r.heure+0.005<r.smicMin;
   return {ents,rows,tot,qtot,missing,legs:S.legumes.filter(l=>l.actif||qtot[l.id]>0)};
 }
 function viewSupervision(){
@@ -672,7 +672,7 @@ function viewSupervision(){
   const paie=A.rows.map(r=>`<tr><td>${esc(personName(r.sid))}</td><td class="n">${r.days.size}</td><td class="n">${fmtN(r.pres)}</td>
     <td class="n ${r.colis?"":"zero"}">${fmtN(r.colis)}</td><td class="n ${r.unites?"":"zero"}">${fmtN(r.unites)}</td><td class="n ${r.hh?"":"zero"}">${fmtN(r.hh)}</td>
     <td class="n">${fmtE(r.tache)}</td><td class="n">${fmtE(r.heure)}</td><td class="n eur">${fmtE(r.total)}</td>
-    <td>${r.alert?`<span class="badge warn" title="Minimum SMIC : ${fmtE(r.smicMin)} pour ${fmtN(r.pres)} h de présence">⚠ sous le SMIC (${fmtE(r.smicMin)})</span>`:""}</td>
+    <td>${r.alert?`<span class="badge warn" title="Minimum SMIC : ${fmtE(r.smicMin)} pour ${fmtN(r.hh)} h de travail à l'heure, payées ${fmtE(r.heure)}">⚠ sous le SMIC (${fmtE(r.smicMin)})</span>`:""}</td>
     <td><button class="btn ico" data-print="${r.sid}" title="Imprimer la fiche de travail" aria-label="Imprimer la fiche de travail de ${esc(personName(r.sid))}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-4px"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></button></td></tr>`).join("");
   const T0=A.tot;
   const foot=`<tr><td>Total</td><td></td><td class="n">${fmtN(T0.pres)}</td><td class="n">${fmtN(T0.colis)}</td><td class="n">${fmtN(T0.unites)}</td><td class="n">${fmtN(T0.hh)}</td><td class="n">${fmtE(T0.tache)}</td><td class="n">${fmtE(T0.heure)}</td><td class="n">${fmtE(T0.total)}</td><td></td><td></td></tr>`;
@@ -721,7 +721,7 @@ function viewSaisonniers(){
           ${r.unites?`<div class="tile"><div class="v">${fmtN(r.unites)}</div><div class="l">unités</div></div>`:""}
           <div class="tile"><div class="v">${fmtN(r.hh)}</div><div class="l">heures à l'heure</div></div>
           <div class="tile money"><div class="v">${fmtE(r.total)}</div><div class="l">montant du mois</div></div></div>
-          ${r.alert?`<div class="notice warn">Sous le SMIC : ${fmtE(r.total)} gagnés pour ${fmtN(r.pres)} h de présence (minimum ${fmtE(r.smicMin)}).</div>`:""}`
+          ${r.alert?`<div class="notice warn">Sous le SMIC : ${fmtE(r.heure)} payés pour ${fmtN(r.hh)} h de travail à l'heure (minimum ${fmtE(r.smicMin)}).</div>`:""}`
         :`<p class="muted">Aucune saisie ce mois-ci.</p>`}
       </div></div>`;
   }
@@ -799,7 +799,7 @@ function viewProduits(){
           <label class="f">À partir du<input id="sm-depuis" data-keep type="date" value="${F("sm-depuis")||today().slice(0,8)+"01"}" required></label>
           <button class="btn">Enregistrer</button>
         </form>
-        <p class="muted" style="font-size:.8rem">${smHist?"Historique : "+esc(smHist)+". ":""}Sert à l'alerte « sous le SMIC » : le total gagné est comparé aux heures de présence × SMIC.</p>
+        <p class="muted" style="font-size:.8rem">${smHist?"Historique : "+esc(smHist)+". ":""}Sert à l'alerte « sous le SMIC » : le montant du travail à l'heure est comparé aux heures à l'heure × SMIC (les horaires de présence et le travail au colis ou à l'unité ne comptent pas).</p>
       </section>
     </div>
     <div class="tscroll"><table><thead><tr><th>Ordre</th><th>Produit</th><th>Portugais</th><th>Prix</th><th>Statut</th><th></th></tr></thead><tbody>${groups}</tbody></table></div>
@@ -929,9 +929,9 @@ function printFiche(sid){
       <tr><td>Travail à la tâche (colis et unités)</td><td class="n">${fmtE(r.tache)}</td></tr>
       <tr><td>Travail à l'heure</td><td class="n">${fmtE(r.heure)}</td></tr>
       <tr class="tot"><td>Total</td><td class="n">${fmtE(r.total)}</td></tr>
-      ${r.smicMin?`<tr><td class="pf-small">Minimum SMIC pour ${esc(fmtH(r.pres))} de présence</td><td class="n pf-small">${fmtE(r.smicMin)}</td></tr>`:""}
+      ${r.smicMin?`<tr><td class="pf-small">Minimum SMIC pour ${esc(fmtN(r.hh))} h de travail à l'heure</td><td class="n pf-small">${fmtE(r.smicMin)}</td></tr>`:""}
     </tbody></table>
-    ${r.alert?`<div class="pf-alert">⚠ Le total est inférieur au minimum SMIC (${fmtE(r.smicMin)}).</div>`:""}
+    ${r.alert?`<div class="pf-alert">⚠ Le montant du travail à l'heure est inférieur au minimum SMIC (${fmtE(r.smicMin)}).</div>`:""}
     ${A.missing&&ents.some(e=>e.v.missing)?`<div class="pf-alert">Certains prix ne sont pas définis : montants incomplets.</div>`:""}
     ${prodRows?`<h2>Par produit</h2><table><thead><tr><th>Produit</th><th>Mode de paie</th><th class="n">Quantité</th><th class="n">Prix</th><th class="n">Montant</th></tr></thead><tbody>${prodRows}</tbody></table>`:""}
     <h2>Par jour</h2><table><thead><tr><th>Date</th><th>Matin</th><th>Après-midi</th><th class="n">Présence</th><th>Réalisé</th><th class="n">Montant</th></tr></thead><tbody>${days}</tbody>
@@ -987,7 +987,7 @@ const r2=n=>Math.round((n||0)*100)/100;
 function exportRows(){
   const A=aggregate(S.range);const [a,b]=periodRange();
   const who=sid=>S.saisonniers.find(x=>x.id===sid)||{nom:"Saisonnier retiré",prenom:""};
-  const paie=[["Nom","Prénom","Jours travaillés","Heures de présence","Colis","Unités","Heures à l'heure","Montant à la tâche (€)","Montant à l'heure (€)","Total (€)","Minimum SMIC (€)","Alerte"]];
+  const paie=[["Nom","Prénom","Jours travaillés","Heures de présence","Colis","Unités","Heures à l'heure","Montant à la tâche (€)","Montant à l'heure (€)","Total (€)","Minimum SMIC sur heures à l'heure (€)","Alerte"]];
   for(const r of A.rows){const p=who(r.sid);paie.push([p.nom.toUpperCase(),p.prenom,r.days.size,r2(r.pres),r.colis,r.unites,r2(r.hh),r2(r.tache),r2(r.heure),r2(r.total),r2(r.smicMin),r.alert?"Sous le SMIC":""])}
   paie.push(["TOTAL","","",r2(A.tot.pres),A.tot.colis,A.tot.unites,r2(A.tot.hh),r2(A.tot.tache),r2(A.tot.heure),r2(A.tot.total),r2(A.tot.smicMin),""]);
   const detail=[["Date","Nom","Prénom","Matin début","Matin fin","Après-midi début","Après-midi fin","Présence (h)","Produit","Mode de paie","Quantité","Bottes par colis","Prix (€ / botte, unité ou h)","Montant (€)","Saisi par","Corrigé par"]];
