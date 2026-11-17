@@ -1,0 +1,664 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SCEA Guidal – Suivi Récoltes</title>
+<meta name="theme-color" content="#1E4736">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Guidal Récoltes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap">
+<style>
+/* Charte SCEA Guidal — variante A « Terroir ». Pour changer de variante, ne modifier que ces deux blocs de couleurs. */
+:root{
+  --green:#1E4736; --green-ink:#1E4736; --red:#C61D2D; --ok:#2E7D32; --ok-mark:#50AF54;
+  --bg:#F2EFE6; --surface:#FBFAF5; --surface-2:#E9E5D8; --line:#D9D3C2;
+  --fg:#1F2A24; --muted:#5E6A61; --on-green:#F2EFE6; --ok-bg:#E3F1E1; --red-bg:#F8E1E2;
+  --display:"Playfair Display", Georgia, "Times New Roman", serif;
+  --body:"Montserrat", "Segoe UI", system-ui, sans-serif;
+  --r:10px; color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --green:#173A2B; --green-ink:#8CC9A0; --red:#E2535F; --ok:#7BCB80; --ok-mark:#6CC070;
+  --bg:#121A16; --surface:#1A2520; --surface-2:#223029; --line:#2F3F36;
+  --fg:#ECE8DD; --muted:#A3AFA6; --on-green:#F2EFE6; --ok-bg:#1F3524; --red-bg:#3A1C20; color-scheme:dark}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45;min-height:100vh}
+[hidden]{display:none!important}
+.wrap{max-width:1100px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.brand{background:var(--green);color:var(--on-green);padding-top:env(safe-area-inset-top,0px)}
+header.brand .wrap{display:flex;align-items:center;gap:12px;padding-block:12px;flex-wrap:wrap}
+.logo{width:48px;height:48px;flex:none}
+.brand h1{font-family:var(--display);font-size:1.4rem;margin:0;line-height:1.1}
+.brand .tag{font-size:.7rem;text-transform:uppercase;letter-spacing:.12em;opacity:.8}
+.userbox{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:.85rem}
+.userbox .role{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;opacity:.8}
+.btn-out{background:none;border:1px solid rgba(242,239,230,.45);color:var(--on-green);border-radius:8px;padding:7px 12px;font:600 .8rem var(--body);cursor:pointer}
+nav.tabs{background:var(--green);border-top:1px solid rgba(255,255,255,.12)}
+nav.tabs .wrap{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+nav.tabs button{background:none;border:0;color:var(--on-green);opacity:.75;font:600 .9rem var(--body);padding:12px 14px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{opacity:1;border-bottom-color:var(--red)}
+:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+main{padding-block:20px calc(60px + env(safe-area-inset-bottom,0px))}
+h2{font-family:var(--display);font-size:1.5rem;margin:0;color:var(--green-ink);text-wrap:balance}
+h3{font-family:var(--display);font-size:1.15rem;margin:0 0 10px;color:var(--green-ink)}
+p{margin:0}
+.muted{color:var(--muted)}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.between{justify-content:space-between}
+.stack{display:flex;flex-direction:column;gap:16px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+input,select{font:500 1rem var(--body);color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-height:44px;width:100%}
+.btn{font:600 .95rem var(--body);border-radius:8px;padding:11px 18px;min-height:44px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;white-space:nowrap}
+.btn.primary{background:var(--green);border-color:var(--green);color:var(--on-green)}
+.btn.validate{background:var(--red);border-color:var(--red);color:#fff}
+.btn.ghost{background:none;border-color:transparent;color:var(--green-ink);padding-inline:6px}
+.btn.danger{color:var(--red);border-color:var(--red);background:none}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.sm{padding:6px 12px;min-height:34px;font-size:.85rem}
+.notice{padding:10px 14px;border-radius:8px;background:var(--surface-2);font-size:.9rem}
+.notice.err{background:var(--red-bg)}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:3px 8px;border-radius:99px;white-space:nowrap}
+.badge.ok{background:var(--ok-bg);color:var(--ok)}
+.badge.todo{background:var(--surface-2);color:var(--muted)}
+.badge.off{background:var(--red-bg);color:var(--red)}
+.badge.role{background:var(--surface-2);color:var(--green-ink)}
+/* Connexion */
+.login{min-height:100vh;display:grid;place-items:center;padding:24px max(16px,env(safe-area-inset-left,0px))}
+.login .card{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.login .top{background:var(--green);color:var(--on-green);padding:24px;text-align:center}
+.login .top svg{width:84px;height:84px}
+.login .top h1{font-family:var(--display);margin:8px 0 2px;font-size:1.6rem}
+.login form{padding:22px;display:flex;flex-direction:column;gap:14px}
+/* Saisie */
+.people{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--surface)}
+.person{display:flex;align-items:center;gap:12px;padding:14px 16px;border:0;border-bottom:1px solid var(--line);background:none;text-align:left;font:inherit;color:inherit;cursor:pointer;min-height:60px;width:100%}
+.person:last-child{border-bottom:0}
+.person:hover{background:var(--surface-2)}
+.person .nm{font-weight:600;flex:1;min-width:0}
+.person .sum{font-size:.8rem;color:var(--muted);font-weight:500}
+.grid-q{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+.qrow{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.qrow .lg{font-weight:600}
+.qrow .un{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.stepper{display:flex;align-items:center;gap:6px;flex:none}
+.stepper button{width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--surface-2);color:var(--green-ink);font:700 1.4rem var(--body);cursor:pointer;line-height:1}
+.stepper input{width:84px;text-align:center;font-weight:700;font-size:1.15rem;font-variant-numeric:tabular-nums;padding-inline:4px}
+.actionbar{position:sticky;bottom:0;background:var(--bg);padding-block:12px calc(12px + env(safe-area-inset-bottom,0px));display:flex;gap:10px;border-top:1px solid var(--line);margin-top:4px}
+.actionbar .btn.validate{flex:1;font-size:1.05rem}
+/* Supervision */
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:none;padding:9px 14px;font:600 .88rem var(--body);color:var(--fg);cursor:pointer;min-height:40px}
+.seg button[aria-pressed="true"]{background:var(--green);color:var(--on-green)}
+.periodnav{display:flex;align-items:center;gap:4px}
+.periodnav strong{min-width:190px;text-align:center;text-transform:capitalize}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.tile{padding:14px 16px;border-radius:var(--r);background:var(--surface);border:1px solid var(--line)}
+.tile .v{font-family:var(--display);font-size:1.9rem;color:var(--green-ink);font-variant-numeric:tabular-nums;line-height:1.1}
+.tile .l{font-size:.8rem;color:var(--muted)}
+.tscroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--surface-2)}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tfoot td{font-weight:700;border-bottom:0;background:var(--surface-2)}
+.zero{color:var(--line)}
+/* Listes de paramètres */
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+.listcfg{display:flex;flex-direction:column}
+.listcfg .it{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.listcfg .it:last-child{border-bottom:0}
+.listcfg .it .nm{flex:1;min-width:140px;font-weight:600}
+.listcfg .it.edit input,.listcfg .it.edit select{flex:1;min-width:110px;width:auto;min-height:38px;padding:7px 10px}
+.addform{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;align-items:end}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--bg);color:var(--fg);padding:0;width:min(520px,calc(100vw - 32px));max-height:calc(100vh - 40px)}
+dialog::backdrop{background:rgba(10,20,15,.55)}
+dialog .dh{padding:16px 18px;background:var(--green);color:var(--on-green)}
+dialog .dh h3{color:var(--on-green);margin:0}
+dialog .db{padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--green);color:var(--on-green);padding:12px 18px;border-radius:99px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:50;max-width:calc(100vw - 32px);text-align:center}
+.toast.err{background:var(--red)}
+@media (max-width:640px){
+  .userbox{margin-left:0;width:100%;justify-content:space-between}
+  .periodnav strong{min-width:0;flex:1}
+  .periodnav{width:100%}
+  h2{font-size:1.3rem}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="radis" viewBox="0 0 64 64">
+    <circle cx="32" cy="32" r="30" fill="#F2EFE6"/>
+    <circle cx="32" cy="32" r="27" fill="none" stroke="#1E4736" stroke-width="2"/>
+    <path d="M32 31 C26 22 20 18 22 11 C28 12 31 20 32 27Z" fill="#4E8F57"/>
+    <path d="M32 31 C38 22 44 18 42 11 C36 12 33 20 32 27Z" fill="#4E8F57"/>
+    <path d="M32 30 C31 22 30 15 32 8 C34 15 33 22 32 30Z" fill="#2F6B3E"/>
+    <circle cx="32" cy="39" r="9" fill="#C61D2D"/>
+    <path d="M25 42 C28 47 36 47 39 42 C36 44 28 44 25 42Z" fill="#F2EFE6"/>
+    <path d="M32 48 L32 54" stroke="#C61D2D" stroke-width="1.5" stroke-linecap="round"/>
+  </symbol>
+</svg>
+
+<div id="root"></div>
+<dialog id="dlg"></dialog>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+(function(){
+"use strict";
+const CFG=window.GUIDAL_CONFIG||{};
+const DOMAIN=CFG.domaineIdentifiants||"scea-guidal.app";
+const CONFIGURED=!!(CFG.supabaseUrl&&CFG.supabaseAnonKey&&!/VOTRE/.test(CFG.supabaseUrl+CFG.supabaseAnonKey));
+const sb=(CONFIGURED&&window.supabase)?window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey):null;
+const UNITES=["Botte","Colis","Cageot","Kg"];
+const CHEF_JOURS=7;
+
+const S={session:null,profil:null,booting:true,loginErr:"",loginBusy:false,
+  saisonniers:[],legumes:[],profils:[],invitations:[],
+  day:null,range:null,
+  view:"saisie",date:today(),search:"",selected:null,draft:{},form:{},editCfg:null,
+  period:"mois",anchor:today()};
+let chan=null,reloadT=null,dayToken=0,rangeToken=0;
+
+/* ---------- utilitaires ---------- */
+function pad(n){return String(n).padStart(2,"0")}
+function iso(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())}
+function today(){return iso(new Date())}
+function parse(s){const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)}
+function addDays(s,n){const d=parse(s);d.setDate(d.getDate()+n);return iso(d)}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+const nf=new Intl.NumberFormat("fr-FR",{maximumFractionDigits:2});
+const fmtN=n=>nf.format(n||0);
+const fmtDay=s=>new Intl.DateTimeFormat("fr-FR",{weekday:"short",day:"numeric",month:"short"}).format(parse(s));
+const fmtLong=s=>new Intl.DateTimeFormat("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"}).format(parse(s));
+const isResp=()=>S.profil&&S.profil.role==="responsable";
+function personName(id){const p=S.saisonniers.find(x=>x.id===String(id));return p?(p.nom.toUpperCase()+" "+p.prenom):"Saisonnier retiré"}
+function sortedPeople(list){return list.slice().sort((a,b)=>(a.nom+" "+a.prenom).localeCompare(b.nom+" "+b.prenom,"fr"))}
+const activeLegumes=()=>S.legumes.filter(l=>l.actif);
+const legLabel=l=>l.nom+" ("+(l.unite||"").toLowerCase()+")";
+const parName=id=>{if(!id)return "—";const p=S.profils.find(x=>x.id===id);return p?p.nom:"Ancien compte"};
+const roleLabel=r=>r==="responsable"?"Responsable":"Chef d'équipe";
+function store(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+function load(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function toast(msg,err){const t=document.getElementById("toast");t.textContent=msg;t.className="toast"+(err?" err":"");t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,3200)}
+function errMsg(e){
+  const m=(e&&(e.message||e.error_description))||String(e||"");
+  if(/row-level security|permission denied|violates row-level/i.test(m))return "Action refusée : vous n'avez pas les droits, ou la date est hors de la période autorisée.";
+  if(/Failed to fetch|NetworkError|network/i.test(m))return "Pas de connexion internet. Réessayez dans un instant.";
+  if(/Réservé|caractères/.test(m))return m;
+  return "Erreur : "+m;
+}
+
+/* ---------- périodes ---------- */
+function periodRange(){
+  const a=S.anchor;
+  if(S.period==="jour")return [a,a];
+  if(S.period==="semaine"){const d=parse(a);const dow=(d.getDay()+6)%7;const start=addDays(a,-dow);return [start,addDays(start,6)]}
+  const d=parse(a);return [iso(new Date(d.getFullYear(),d.getMonth(),1)),iso(new Date(d.getFullYear(),d.getMonth()+1,0))];
+}
+function periodLabel(){
+  const [a,b]=periodRange();
+  if(S.period==="jour")return fmtLong(a);
+  if(S.period==="mois")return new Intl.DateTimeFormat("fr-FR",{month:"long",year:"numeric"}).format(parse(a));
+  return "Semaine du "+fmtDay(a)+" au "+fmtDay(b);
+}
+function shiftPeriod(dir){
+  if(S.period==="jour")S.anchor=addDays(S.anchor,dir);
+  else if(S.period==="semaine")S.anchor=addDays(S.anchor,7*dir);
+  else{const d=parse(S.anchor);S.anchor=iso(new Date(d.getFullYear(),d.getMonth()+dir,1))}
+  loadRange();
+}
+
+/* ---------- données ---------- */
+async function fetchRecoltes(a,b){
+  const out=[];
+  for(let from=0;;from+=1000){
+    const {data,error}=await sb.from("recoltes").select("date,saisonnier_id,legume_id,quantite,saisi_par,corrige_par").gte("date",a).lte("date",b).order("id").range(from,from+999);
+    if(error)throw error;
+    out.push(...data);
+    if(data.length<1000)break;
+  }
+  return out;
+}
+function group(rows){
+  const m={};
+  for(const r of rows){
+    const k=r.date+"|"+r.saisonnier_id;
+    const e=m[k]||(m[k]={date:r.date,sid:String(r.saisonnier_id),q:{},par:r.saisi_par,corr:r.corrige_par});
+    e.q[String(r.legume_id)]=Number(r.quantite);
+    if(r.corrige_par)e.corr=r.corrige_par;
+  }
+  return Object.values(m).sort((x,y)=>x.date.localeCompare(y.date)||personName(x.sid).localeCompare(personName(y.sid),"fr"));
+}
+async function loadRef(){
+  const [s,l]=await Promise.all([
+    sb.from("saisonniers").select("id,nom,prenom,actif"),
+    sb.from("legumes").select("id,nom,unite,actif,ordre").order("ordre").order("id")]);
+  if(s.error)throw s.error; if(l.error)throw l.error;
+  S.saisonniers=s.data.map(x=>({...x,id:String(x.id)}));
+  S.legumes=l.data.map(x=>({...x,id:String(x.id)}));
+}
+async function loadDay(){
+  const t=++dayToken;
+  try{const rows=await fetchRecoltes(S.date,S.date);if(t!==dayToken)return;
+    const m={};for(const e of group(rows))m[e.sid]=e;S.day=m;}
+  catch(e){if(t===dayToken){S.day={};toast(errMsg(e),true)}}
+  render();
+}
+async function loadRange(){
+  if(!isResp())return;
+  const t=++rangeToken;S.range=null;render();
+  const [a,b]=periodRange();
+  try{const rows=await fetchRecoltes(a,b);if(t!==rangeToken)return;S.range=group(rows)}
+  catch(e){if(t===rangeToken){S.range=[];toast(errMsg(e),true)}}
+  render();
+}
+async function loadProfils(){
+  if(!isResp())return;
+  const [p,i]=await Promise.all([sb.from("profils").select("*").order("nom"),sb.from("invitations").select("*").order("nom")]);
+  if(!p.error)S.profils=p.data; if(!i.error)S.invitations=i.data;
+}
+function scheduleReload(what){
+  clearTimeout(reloadT);
+  reloadT=setTimeout(async()=>{
+    try{if(what==="ref")await loadRef();}catch(e){}
+    loadDay();loadRange();
+  },400);
+}
+function subscribe(){
+  if(chan)sb.removeChannel(chan);
+  chan=sb.channel("guidal-live")
+    .on("postgres_changes",{event:"*",schema:"public",table:"recoltes"},()=>scheduleReload("rec"))
+    .on("postgres_changes",{event:"*",schema:"public",table:"saisonniers"},()=>scheduleReload("ref"))
+    .on("postgres_changes",{event:"*",schema:"public",table:"legumes"},()=>scheduleReload("ref"))
+    .subscribe();
+}
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&S.profil&&S.profil.actif)scheduleReload("ref")});
+
+/* ---------- session ---------- */
+async function onSession(session){
+  const prev=S.session&&S.session.user.id;
+  S.session=session;
+  if(session&&prev===session.user.id&&S.profil)return;
+  if(chan){sb.removeChannel(chan);chan=null}
+  S.profil=null;S.day=null;S.range=null;S.profils=[];S.selected=null;S.editCfg=null;
+  if(!session){S.booting=false;render();return}
+  S.booting=true;render();
+  const {data,error}=await sb.from("profils").select("*").eq("id",session.user.id).maybeSingle();
+  if(error||!data||!data.actif){S.profil={blocked:true,actif:false,nom:data?data.nom:""};S.booting=false;render();return}
+  S.profil=data;
+  const v=load("guidal.view");S.view=(isResp()&&["saisie","supervision","parametres","equipe"].includes(v))?v:"saisie";
+  try{await loadRef();await loadProfils()}catch(e){toast(errMsg(e),true)}
+  S.booting=false;
+  loadDay();loadRange();subscribe();render();
+}
+async function login(ident,mdp){
+  ident=ident.trim().toLowerCase();
+  if(!ident||!mdp){S.loginErr="Saisissez votre identifiant et votre mot de passe.";render();return}
+  S.loginBusy=true;S.loginErr="";render();
+  const email=ident.includes("@")?ident:ident+"@"+DOMAIN;
+  const {error}=await sb.auth.signInWithPassword({email,password:mdp});
+  S.loginBusy=false;
+  if(error){
+    S.loginErr=/Invalid login/i.test(error.message)?"Identifiant ou mot de passe incorrect.":
+      /not confirmed/i.test(error.message)?"Compte pas encore confirmé. Le responsable doit désactiver « Confirm email » dans Supabase (voir le guide).":errMsg(error);
+    render();
+  }
+}
+
+/* ---------- rendu ---------- */
+const logo=(cls)=>`<svg class="${cls||"logo"}" aria-hidden="true"><use href="#radis"/></svg>`;
+function render(){
+  const root=document.getElementById("root");
+  const active=document.activeElement;const fid=active&&active.id;let caret=null;try{caret=active&&active.selectionStart}catch(e){}
+  root.innerHTML=renderScreen();
+  if(fid){const el=document.getElementById(fid);if(el&&(el.tagName==="INPUT"||el.tagName==="SELECT")){el.focus();try{if(caret!=null)el.setSelectionRange(caret,caret)}catch(e){}}}
+}
+function renderScreen(){
+  if(!CONFIGURED)return screenMsg("Configuration à terminer","Renseignez l'adresse et la clé de votre projet Supabase dans le fichier <b>config.js</b>, comme indiqué dans le guide d'installation.");
+  if(!sb)return screenMsg("Chargement impossible","La bibliothèque de connexion n'a pas pu être chargée. Vérifiez la connexion internet puis rechargez la page.");
+  if(S.booting)return screenMsg("Chargement…","Connexion à la base de l'exploitation.");
+  if(!S.session)return screenLogin();
+  if(!S.profil||S.profil.blocked)return screenMsg("Compte non activé","Ce compte n'a pas accès à l'application, ou il a été désactivé. Contactez le responsable de l'exploitation.",true);
+  return screenApp();
+}
+function screenMsg(title,body,withLogout){
+  return `<div class="login"><div class="card"><div class="top">${logo("")}<h1>SCEA Guidal</h1><div class="tag" style="font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;opacity:.8">Suivi des récoltes</div></div>
+    <div style="padding:22px" class="stack"><h3 style="margin:0">${title}</h3><p class="muted">${body}</p>${withLogout?`<button class="btn" data-act="logout">Se déconnecter</button>`:""}</div></div></div>`;
+}
+function screenLogin(){
+  return `<div class="login"><div class="card">
+    <div class="top">${logo("")}<h1>SCEA Guidal</h1><div style="font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;opacity:.8">Terroir &amp; Fraîcheur · Suivi des récoltes</div></div>
+    <form id="form-login" autocomplete="on">
+      <label class="f" for="l-ident">Identifiant<input id="l-ident" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="julien" required></label>
+      <label class="f" for="l-mdp">Mot de passe<input id="l-mdp" name="password" type="password" autocomplete="current-password" required></label>
+      ${S.loginErr?`<div class="notice err">${esc(S.loginErr)}</div>`:""}
+      <button class="btn primary" ${S.loginBusy?"disabled":""}>${S.loginBusy?"Connexion…":"Se connecter"}</button>
+      <p class="muted" style="font-size:.8rem">Pas de compte ou mot de passe oublié ? Demandez au responsable de l'exploitation.</p>
+    </form></div></div>`;
+}
+function screenApp(){
+  const resp=isResp();const view=resp?S.view:"saisie";
+  const tabs=[["saisie","Saisie"],["supervision","Supervision"],["parametres","Saisonniers et légumes"],["equipe","Équipe"]];
+  let body;
+  if(view==="saisie")body=viewSaisie();
+  else if(view==="supervision")body=viewSupervision();
+  else if(view==="parametres")body=viewParametres();
+  else body=viewEquipe();
+  return `<header class="brand"><div class="wrap">
+      ${logo()}
+      <div><div class="tag">Terroir &amp; Fraîcheur · depuis 1995</div><h1>SCEA Guidal</h1></div>
+      <div class="userbox"><div><div>${esc(S.profil.nom)}</div><div class="role">${roleLabel(S.profil.role)}</div></div><button class="btn-out" data-act="logout">Déconnexion</button></div>
+    </div></header>
+    ${resp?`<nav class="tabs" aria-label="Espaces"><div class="wrap" role="tablist">${tabs.map(([k,l])=>`<button role="tab" data-view="${k}" aria-selected="${view===k}">${l}</button>`).join("")}</div></nav>`:""}
+    <main class="wrap">${body}</main>`;
+}
+
+/* --- Saisie --- */
+function summary(q){return S.legumes.filter(l=>Number(q[l.id])>0).map(l=>fmtN(q[l.id])+" "+l.nom.toLowerCase()).join(" · ")}
+function viewSaisie(){
+  const legs=activeLegumes();const entries=S.day||{};
+  const minDate=isResp()?"":addDays(today(),-CHEF_JOURS);
+  if(S.selected){
+    const p=S.saisonniers.find(x=>x.id===S.selected);
+    const rows=legs.map(l=>`<div class="qrow"><div><div class="lg">${esc(l.nom)}</div><div class="un">${esc(l.unite)}</div></div>
+      <div class="stepper"><button type="button" data-step="-1" data-leg="${l.id}" aria-label="Retirer 1">−</button>
+      <input id="q-${l.id}" data-q="${l.id}" type="number" inputmode="decimal" min="0" step="any" value="${esc(S.draft[l.id]??"")}" placeholder="0" aria-label="${esc(l.nom)} en ${esc(l.unite)}">
+      <button type="button" data-step="1" data-leg="${l.id}" aria-label="Ajouter 1">+</button></div></div>`).join("");
+    return `<div class="stack">
+      <div class="row between"><button class="btn ghost" data-act="back">← Retour à la liste</button><span class="muted" style="text-transform:capitalize">${esc(fmtLong(S.date))}</span></div>
+      <div class="row"><h2>${esc(p?p.prenom+" "+p.nom.toUpperCase():"")}</h2>${entries[S.selected]?`<span class="badge ok">Déjà saisi · la validation remplace</span>`:""}</div>
+      ${legs.length?`<div class="grid-q">${rows}</div>`:`<div class="notice">Aucun légume actif. Le responsable les ajoute dans « Saisonniers et légumes ».</div>`}
+      <div class="actionbar"><button class="btn validate" data-act="validate" ${legs.length?"":"disabled"}>Valider la saisie</button></div>
+    </div>`;
+  }
+  const people=sortedPeople(S.saisonniers.filter(x=>x.actif));
+  const q=S.search.trim().toLowerCase();
+  const shown=people.filter(p=>!q||(p.nom+" "+p.prenom).toLowerCase().includes(q)||(p.prenom+" "+p.nom).toLowerCase().includes(q));
+  const done=people.filter(p=>entries[p.id]).length;
+  const list=shown.map(p=>{const e=entries[p.id];return `<button class="person" data-pick="${p.id}">
+      <span class="nm">${esc(p.nom.toUpperCase())} ${esc(p.prenom)}${e?`<div class="sum">${esc(summary(e.q))}</div>`:""}</span>
+      ${e?`<span class="badge ok">✓ Saisi</span>`:`<span class="badge todo">À saisir</span>`}</button>`}).join("");
+  return `<div class="stack">
+    <div class="row between"><h2>Saisie du jour</h2><span class="muted">${S.day?`${done} / ${people.length} saisis`:""}</span></div>
+    <div class="row" style="align-items:flex-end">
+      <label class="f" style="flex:0 1 200px">Date<input type="date" id="f-date" value="${S.date}" max="${today()}" ${minDate?`min="${minDate}"`:""}></label>
+      <label class="f" style="flex:1 1 220px">Rechercher un saisonnier<input type="search" id="f-search" value="${esc(S.search)}" placeholder="Nom ou prénom"></label>
+    </div>
+    ${!people.length?`<div class="panel"><h3>Aucun saisonnier actif</h3><p class="muted">${isResp()?"Ajoutez les saisonniers dans l'onglet « Saisonniers et légumes ».":"Le responsable doit d'abord ajouter les saisonniers."}</p></div>`:
+      !S.day?`<p class="muted">Chargement de la journée…</p>`:
+      shown.length?`<div class="people">${list}</div>`:`<p class="muted">Aucun saisonnier ne correspond à « ${esc(S.search)} ».</p>`}
+  </div>`;
+}
+
+/* --- Supervision --- */
+function aggregate(){
+  const ents=(S.range||[]).filter(e=>Object.values(e.q).some(v=>v>0));
+  const legIds=S.legumes.filter(l=>l.actif||ents.some(e=>Number(e.q[l.id])>0)).map(l=>l.id);
+  const byP={};
+  for(const e of ents){const r=byP[e.sid]||(byP[e.sid]={sid:e.sid,q:{},days:new Set()});r.days.add(e.date);for(const k of legIds)r.q[k]=(r.q[k]||0)+(Number(e.q[k])||0)}
+  const rows=Object.values(byP).sort((a,b)=>personName(a.sid).localeCompare(personName(b.sid),"fr"));
+  const tot={};for(const k of legIds)tot[k]=rows.reduce((s,r)=>s+(r.q[k]||0),0);
+  return {ents,legIds,rows,tot,legs:legIds.map(id=>S.legumes.find(l=>l.id===id))};
+}
+function viewSupervision(){
+  const per=["jour","semaine","mois"].map(p=>`<button data-period="${p}" aria-pressed="${S.period===p}">${p[0].toUpperCase()+p.slice(1)}</button>`).join("");
+  const head=`<div class="row between"><h2>Tableau de bord</h2>
+      <div class="row"><button class="btn primary" data-act="xlsx" ${S.range&&S.range.length?"":"disabled"}>Exporter vers Excel</button><button class="btn" data-act="csv" ${S.range&&S.range.length?"":"disabled"}>CSV</button></div></div>
+    <div class="row"><div class="seg" role="group" aria-label="Période">${per}</div>
+      <div class="periodnav"><button class="btn sm" data-act="prev" aria-label="Période précédente">‹</button>
+      <strong>${esc(periodLabel())}</strong>
+      <button class="btn sm" data-act="next" aria-label="Période suivante">›</button>
+      <button class="btn sm ghost" data-act="now">Aujourd'hui</button></div></div>`;
+  if(!S.range)return `<div class="stack">${head}<p class="muted">Chargement de la période…</p></div>`;
+  const A=aggregate();
+  if(!A.ents.length)return `<div class="stack">${head}<div class="panel"><h3>Aucune récolte sur cette période</h3><p class="muted">Les saisies des chefs d'équipe apparaissent ici en temps réel.</p></div></div>`;
+  const tiles=A.legs.map(l=>`<div class="tile"><div class="v">${fmtN(A.tot[l.id])}</div><div class="l">${esc((l.unite||"").toLowerCase())}s · ${esc(l.nom)}</div></div>`).join("")
+    +`<div class="tile"><div class="v">${A.rows.length}</div><div class="l">saisonniers ayant récolté</div></div>`;
+  const th=A.legs.map(l=>`<th class="n">${esc(legLabel(l))}</th>`).join("");
+  const body=A.rows.map(r=>`<tr><td>${esc(personName(r.sid))}</td>${A.legIds.map(k=>`<td class="n ${r.q[k]?"":"zero"}">${fmtN(r.q[k])}</td>`).join("")}<td class="n">${r.days.size}</td></tr>`).join("");
+  const foot=`<tr><td>Total</td>${A.legIds.map(k=>`<td class="n">${fmtN(A.tot[k])}</td>`).join("")}<td></td></tr>`;
+  const det=A.ents.slice().reverse().map(e=>`<tr><td>${esc(fmtDay(e.date))}</td><td>${esc(personName(e.sid))}</td>${A.legIds.map(k=>`<td class="n ${Number(e.q[k])?"":"zero"}">${fmtN(e.q[k])}</td>`).join("")}<td>${esc(parName(e.par))}${e.corr?` <span class="muted">· corrigé par ${esc(parName(e.corr))}</span>`:""}</td><td><button class="btn sm" data-edit="${e.date}|${e.sid}">Corriger</button></td></tr>`).join("");
+  return `<div class="stack">${head}
+    <div class="tiles">${tiles}</div>
+    <div><h3>Cumuls par saisonnier</h3><div class="tscroll"><table><thead><tr><th>Saisonnier</th>${th}<th class="n">Jours</th></tr></thead><tbody>${body}</tbody><tfoot>${foot}</tfoot></table></div></div>
+    <div><h3>Saisies journalières</h3><div class="tscroll"><table><thead><tr><th>Date</th><th>Saisonnier</th>${th}<th>Saisi par</th><th></th></tr></thead><tbody>${det}</tbody></table></div></div>
+  </div>`;
+}
+
+/* --- Saisonniers et légumes --- */
+const F=k=>esc(S.form[k]??"");
+function viewParametres(){
+  const E=S.editCfg;
+  const ppl=sortedPeople(S.saisonniers).map(p=>(E&&E.kind==="s"&&E.id===p.id)?
+     `<form class="it edit" id="form-es" data-id="${p.id}"><input id="es-nom" data-keep aria-label="Nom" value="${F("es-nom")}" required><input id="es-prenom" data-keep aria-label="Prénom" value="${F("es-prenom")}" required>
+      <button class="btn sm primary">Enregistrer</button><button type="button" class="btn sm" data-act="cfg-cancel">Annuler</button></form>`:
+     `<div class="it"><span class="nm">${esc(p.nom.toUpperCase())} ${esc(p.prenom)}</span>
+      ${p.actif?`<span class="badge ok">Actif</span>`:`<span class="badge off">Parti</span>`}
+      <button class="btn sm" data-edit-s="${p.id}">Modifier</button><button class="btn sm" data-toggle-s="${p.id}">${p.actif?"Marquer parti":"Réactiver"}</button></div>`).join("");
+  const legs=S.legumes.map(l=>(E&&E.kind==="l"&&E.id===l.id)?
+     `<form class="it edit" id="form-el" data-id="${l.id}"><input id="el-nom" data-keep aria-label="Légume" value="${F("el-nom")}" required><select id="el-unite" data-keep aria-label="Unité">${UNITES.map(u=>`<option ${S.form["el-unite"]===u?"selected":""}>${u}</option>`).join("")}</select>
+      <button class="btn sm primary">Enregistrer</button><button type="button" class="btn sm" data-act="cfg-cancel">Annuler</button></form>`:
+     `<div class="it"><span class="nm">${esc(l.nom)} <span class="muted">· ${esc(l.unite)}</span></span>
+      ${l.actif?`<span class="badge ok">Actif</span>`:`<span class="badge off">Masqué</span>`}
+      <button class="btn sm" data-edit-l="${l.id}">Modifier</button><button class="btn sm" data-toggle-l="${l.id}">${l.actif?"Masquer":"Réactiver"}</button></div>`).join("");
+  return `<div class="stack">
+    <h2>Saisonniers et légumes</h2>
+    <div class="cols">
+      <section class="panel stack"><h3>Saisonniers</h3>
+        <form id="form-s" class="addform"><label class="f">Nom<input id="s-nom" data-keep value="${F("s-nom")}" required></label><label class="f">Prénom<input id="s-prenom" data-keep value="${F("s-prenom")}" required></label><button class="btn primary">Ajouter</button></form>
+        <div class="listcfg">${ppl||`<p class="muted">Aucun saisonnier. Ajoutez le premier avec le formulaire ci-dessus.</p>`}</div>
+      </section>
+      <section class="panel stack"><h3>Légumes</h3>
+        <form id="form-l" class="addform"><label class="f">Légume<input id="l-nom" data-keep value="${F("l-nom")}" placeholder="Poireaux" required></label><label class="f">Unité<select id="l-unite" data-keep>${UNITES.map(u=>`<option ${S.form["l-unite"]===u?"selected":""}>${u}</option>`).join("")}</select></label><button class="btn primary">Ajouter</button></form>
+        <div class="listcfg">${legs||`<p class="muted">Aucun légume.</p>`}</div>
+      </section>
+    </div>
+  </div>`;
+}
+
+/* --- Équipe (comptes) --- */
+function viewEquipe(){
+  const E=S.editCfg;const me=S.profil.id;
+  const roleSel=(id,val)=>`<select id="${id}" data-keep aria-label="Rôle"><option value="chef" ${val==="chef"?"selected":""}>Chef d'équipe</option><option value="responsable" ${val==="responsable"?"selected":""}>Responsable</option></select>`;
+  const rows=S.profils.map(p=>{
+    if(E&&E.kind==="u"&&E.id===p.id)return `<form class="it edit" id="form-eu" data-id="${p.id}"><input id="eu-nom" data-keep aria-label="Nom affiché" value="${F("eu-nom")}" required>${p.id===me?"":roleSel("eu-role",S.form["eu-role"])}
+      <button class="btn sm primary">Enregistrer</button><button type="button" class="btn sm" data-act="cfg-cancel">Annuler</button></form>`;
+    if(E&&E.kind==="pw"&&E.id===p.id)return `<form class="it edit" id="form-pw" data-id="${p.id}"><span class="nm">${esc(p.nom)}</span><input id="pw-new" data-keep type="text" autocomplete="new-password" placeholder="Nouveau mot de passe (6 caractères min.)" value="${F("pw-new")}" required>
+      <button class="btn sm primary">Valider</button><button type="button" class="btn sm" data-act="cfg-cancel">Annuler</button></form>`;
+    return `<div class="it"><span class="nm">${esc(p.nom)} <span class="muted">· ${esc(p.identifiant)}</span>${p.id===me?` <span class="muted">(vous)</span>`:""}</span>
+      <span class="badge role">${roleLabel(p.role)}</span>${p.actif?"":`<span class="badge off">Désactivé</span>`}
+      <button class="btn sm" data-edit-u="${p.id}">Modifier</button>
+      <button class="btn sm" data-pw="${p.id}">Mot de passe</button>
+      ${p.id===me?"":`<button class="btn sm" data-toggle-u="${p.id}">${p.actif?"Désactiver":"Réactiver"}</button>`}</div>`}).join("");
+  const pend=S.invitations.length?`<div class="notice">Comptes en attente : ${S.invitations.map(i=>esc(i.nom+" ("+i.identifiant+")")).join(", ")}. Ils seront actifs dès leur création.</div>`:"";
+  return `<div class="stack">
+    <h2>Équipe et accès</h2>
+    <p class="muted">Les chefs d'équipe ne voient que l'écran de saisie. Les responsables voient tout et gèrent les comptes.</p>
+    <section class="panel stack"><h3>Créer un compte</h3>
+      <form id="form-u" class="addform">
+        <label class="f">Nom affiché<input id="u-nom" data-keep value="${F("u-nom")}" placeholder="Julien M." required></label>
+        <label class="f">Identifiant<input id="u-ident" data-keep value="${F("u-ident")}" autocapitalize="none" spellcheck="false" placeholder="julien" required></label>
+        <label class="f">Mot de passe<input id="u-mdp" data-keep type="text" autocomplete="new-password" value="${F("u-mdp")}" placeholder="6 caractères min." required></label>
+        <label class="f">Rôle${roleSel("u-role",S.form["u-role"]||"chef")}</label>
+        <button class="btn primary" ${S.form._busy?"disabled":""}>${S.form._busy?"Création…":"Créer le compte"}</button>
+      </form>
+      <p class="muted" style="font-size:.85rem">Identifiant : lettres minuscules, chiffres, point ou tiret. Communiquez l'identifiant et le mot de passe à la personne.</p>
+    </section>
+    ${pend}
+    <section class="panel"><h3>Comptes</h3><div class="listcfg">${rows||`<p class="muted">Aucun compte.</p>`}</div></section>
+  </div>`;
+}
+
+/* ---------- fenêtre de correction ---------- */
+function openEdit(date,sid){
+  const e=(S.range||[]).find(x=>x.date===date&&x.sid===sid);if(!e)return;
+  const legs=S.legumes.filter(l=>l.actif||Number(e.q[l.id])>0);
+  const d=document.getElementById("dlg");
+  d.innerHTML=`<div class="dh"><h3>Corriger la saisie</h3><div style="font-size:.85rem;opacity:.85">${esc(personName(sid))} · ${esc(fmtLong(date))}</div></div>
+   <form class="db" id="form-edit">
+    ${legs.map(l=>`<div class="qrow"><div><div class="lg">${esc(l.nom)}</div><div class="un">${esc(l.unite)}</div></div><input data-eq="${l.id}" type="number" inputmode="decimal" min="0" step="any" value="${Number(e.q[l.id])||""}" placeholder="0" style="width:110px;text-align:right" aria-label="${esc(l.nom)}"></div>`).join("")}
+    <div class="row between">
+      <button type="button" class="btn danger" id="e-del">Supprimer</button>
+      <div class="row"><button type="button" class="btn" id="e-cancel">Annuler</button><button class="btn validate">Enregistrer</button></div>
+    </div></form>`;
+  d.showModal();
+  d.querySelector("#e-cancel").onclick=()=>d.close();
+  const del=d.querySelector("#e-del");
+  del.onclick=async()=>{
+    if(!del.dataset.confirm){del.dataset.confirm="1";del.textContent="Confirmer la suppression";return}
+    const {error}=await sb.from("recoltes").delete().eq("date",date).eq("saisonnier_id",Number(sid));
+    if(error)return toast(errMsg(error),true);
+    d.close();toast("Saisie supprimée");loadDay();loadRange();
+  };
+  d.querySelector("#form-edit").onsubmit=async ev=>{
+    ev.preventDefault();const q={};
+    d.querySelectorAll("[data-eq]").forEach(i=>{q[i.dataset.eq]=Math.max(0,Number(i.value)||0)});
+    const {error}=await sb.rpc("enregistrer_saisie",{p_date:date,p_saisonnier:Number(sid),p_quantites:q});
+    if(error)return toast(errMsg(error),true);
+    d.close();toast("Saisie corrigée");loadDay();loadRange();
+  };
+}
+
+/* ---------- export ---------- */
+function exportRows(){
+  const A=aggregate();const [a,b]=periodRange();
+  const recap=[["Nom","Prénom",...A.legs.map(legLabel),"Jours travaillés"]];
+  for(const r of A.rows){const p=S.saisonniers.find(x=>x.id===r.sid)||{nom:"Saisonnier retiré",prenom:""};recap.push([p.nom.toUpperCase(),p.prenom,...A.legIds.map(k=>r.q[k]||0),r.days.size])}
+  recap.push(["TOTAL","",...A.legIds.map(k=>A.tot[k]),""]);
+  const detail=[["Date","Nom","Prénom","Légume","Unité","Quantité","Saisi par","Corrigé par"]];
+  for(const e of A.ents){const p=S.saisonniers.find(x=>x.id===e.sid)||{nom:"Saisonnier retiré",prenom:""};
+    for(const l of A.legs){const v=Number(e.q[l.id])||0;if(v>0)detail.push([e.date,p.nom.toUpperCase(),p.prenom,l.nom,l.unite,v,parName(e.par),e.corr?parName(e.corr):""])}}
+  return {recap,detail,tag:S.period==="mois"?a.slice(0,7):a+"_"+b,a,b};
+}
+function saveBlob(name,blob){
+  const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
+  toast("Fichier téléchargé : "+name);
+}
+function doXlsx(){
+  if(!window.XLSX)return toast("Module Excel non chargé. Utilisez l'export CSV.",true);
+  const R=exportRows();const wb=XLSX.utils.book_new();
+  const head=[["SCEA Guidal · Récapitulatif des récoltes"],["Période : "+periodLabel()+" ("+R.a+" au "+R.b+")"],[]];
+  const ws1=XLSX.utils.aoa_to_sheet(head.concat(R.recap));
+  ws1["!cols"]=[{wch:20},{wch:16},...R.recap[0].slice(2).map(()=>({wch:18}))];
+  XLSX.utils.book_append_sheet(wb,ws1,"Récap paie");
+  const ws2=XLSX.utils.aoa_to_sheet(R.detail);ws2["!cols"]=[{wch:12},{wch:18},{wch:14},{wch:18},{wch:9},{wch:10},{wch:18},{wch:18}];
+  XLSX.utils.book_append_sheet(wb,ws2,"Détail journalier");
+  const buf=XLSX.write(wb,{bookType:"xlsx",type:"array"});
+  saveBlob("Recoltes_SCEA-Guidal_"+R.tag+".xlsx",new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));
+}
+function doCsv(){
+  const R=exportRows();
+  const csv=R.recap.map(r=>r.map(v=>{const s=typeof v==="number"?String(v).replace(".",","):String(v);return /[;"\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s}).join(";")).join("\r\n");
+  saveBlob("Recoltes_SCEA-Guidal_"+R.tag+".csv",new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8"}));
+}
+
+/* ---------- actions ---------- */
+async function run(p,okMsg){const {error}=await p;if(error){toast(errMsg(error),true);return false}if(okMsg)toast(okMsg);return true}
+async function createAccount(){
+  const nom=(S.form["u-nom"]||"").trim(),ident=(S.form["u-ident"]||"").trim().toLowerCase(),mdp=S.form["u-mdp"]||"",role=S.form["u-role"]||"chef";
+  if(!nom||!ident||!mdp)return toast("Remplissez le nom, l'identifiant et le mot de passe.",true);
+  if(!/^[a-z0-9._-]{2,40}$/.test(ident))return toast("Identifiant invalide : lettres minuscules sans accent, chiffres, point ou tiret.",true);
+  if(mdp.length<6)return toast("Le mot de passe doit faire au moins 6 caractères.",true);
+  if(S.profils.some(p=>p.identifiant===ident))return toast("Cet identifiant existe déjà.",true);
+  S.form._busy=true;render();
+  try{
+    let r=await sb.from("invitations").upsert({identifiant:ident,nom,role});
+    if(r.error)throw r.error;
+    const tmp=window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false,storageKey:"guidal-creation"}});
+    r=await tmp.auth.signUp({email:ident+"@"+DOMAIN,password:mdp});
+    if(r.error){await sb.from("invitations").delete().eq("identifiant",ident);throw r.error}
+    await loadProfils();
+    if(S.profils.some(p=>p.identifiant===ident)){S.form["u-nom"]=S.form["u-ident"]=S.form["u-mdp"]="";toast("Compte créé : "+ident)}
+    else toast("Compte enregistré mais pas encore actif. Vérifiez le réglage « Confirm email » dans Supabase (voir le guide).",true);
+  }catch(e){toast(/already registered/i.test(e.message||"")?"Cet identifiant existe déjà.":errMsg(e),true)}
+  S.form._busy=false;render();
+}
+
+document.addEventListener("click",async e=>{
+  const t=e.target.closest("button");if(!t||t.closest("dialog"))return;
+  if(t.dataset.view){S.view=t.dataset.view;S.editCfg=null;store("guidal.view",S.view);render();window.scrollTo(0,0);return}
+  if(t.dataset.pick){S.selected=t.dataset.pick;const ex=(S.day||{})[S.selected];S.draft={};if(ex)for(const k in ex.q)if(ex.q[k]>0)S.draft[k]=ex.q[k];render();window.scrollTo(0,0);return}
+  if(t.dataset.step){const id=t.dataset.leg;const v=Math.max(0,(Number(S.draft[id])||0)+Number(t.dataset.step));S.draft[id]=v||"";const inp=document.getElementById("q-"+id);if(inp)inp.value=S.draft[id];return}
+  if(t.dataset.period){S.period=t.dataset.period;loadRange();return}
+  if(t.dataset.edit){const [d,s]=t.dataset.edit.split("|");openEdit(d,s);return}
+  if(t.dataset.toggleS){const p=S.saisonniers.find(x=>x.id===t.dataset.toggleS);if(await run(sb.from("saisonniers").update({actif:!p.actif}).eq("id",Number(p.id)))){await loadRef();render()}return}
+  if(t.dataset.toggleL){const l=S.legumes.find(x=>x.id===t.dataset.toggleL);if(await run(sb.from("legumes").update({actif:!l.actif}).eq("id",Number(l.id)))){await loadRef();render()}return}
+  if(t.dataset.editS){const p=S.saisonniers.find(x=>x.id===t.dataset.editS);S.editCfg={kind:"s",id:p.id};S.form["es-nom"]=p.nom;S.form["es-prenom"]=p.prenom;render();return}
+  if(t.dataset.editL){const l=S.legumes.find(x=>x.id===t.dataset.editL);S.editCfg={kind:"l",id:l.id};S.form["el-nom"]=l.nom;S.form["el-unite"]=l.unite;render();return}
+  if(t.dataset.editU){const p=S.profils.find(x=>x.id===t.dataset.editU);S.editCfg={kind:"u",id:p.id};S.form["eu-nom"]=p.nom;S.form["eu-role"]=p.role;render();return}
+  if(t.dataset.pw){S.editCfg={kind:"pw",id:t.dataset.pw};S.form["pw-new"]="";render();return}
+  if(t.dataset.toggleU){const p=S.profils.find(x=>x.id===t.dataset.toggleU);if(await run(sb.from("profils").update({actif:!p.actif}).eq("id",p.id),p.actif?"Compte désactivé":"Compte réactivé")){await loadProfils();render()}return}
+  switch(t.dataset.act){
+    case "logout":await sb.auth.signOut();break;
+    case "cfg-cancel":S.editCfg=null;render();break;
+    case "back":S.selected=null;render();break;
+    case "validate":{
+      const q={};for(const l of activeLegumes())q[l.id]=Math.max(0,Number(S.draft[l.id])||0);
+      t.disabled=true;t.textContent="Envoi…";
+      const {error}=await sb.rpc("enregistrer_saisie",{p_date:S.date,p_saisonnier:Number(S.selected),p_quantites:q});
+      if(error){toast(errMsg(error),true);t.disabled=false;t.textContent="Valider la saisie";return}
+      const n=personName(S.selected);S.selected=null;S.search="";toast("Saisie enregistrée · "+n);render();loadDay();window.scrollTo(0,0);break}
+    case "prev":shiftPeriod(-1);break;
+    case "next":shiftPeriod(1);break;
+    case "now":S.anchor=today();loadRange();break;
+    case "xlsx":doXlsx();break;
+    case "csv":doCsv();break;
+  }
+});
+document.addEventListener("input",e=>{
+  const t=e.target;
+  if(t.id==="f-search"){S.search=t.value;render()}
+  else if(t.dataset&&t.dataset.q){S.draft[t.dataset.q]=t.value}
+  else if(t.dataset&&"keep" in t.dataset){S.form[t.id]=t.value}
+});
+document.addEventListener("change",e=>{
+  const t=e.target;
+  if(t.id==="f-date"&&t.value){S.date=t.value;S.selected=null;S.day=null;loadDay()}
+  else if(t.dataset&&"keep" in t.dataset){S.form[t.id]=t.value}
+});
+document.addEventListener("submit",async e=>{
+  const f=e.target;if(f.closest("dialog"))return;
+  e.preventDefault();
+  const v=id=>(document.getElementById(id)||{}).value||"";
+  switch(f.id){
+    case "form-login":login(v("l-ident"),v("l-mdp"));break;
+    case "form-s":{const nom=v("s-nom").trim(),prenom=v("s-prenom").trim();if(!nom||!prenom)return;
+      if(await run(sb.from("saisonniers").insert({nom,prenom}),prenom+" "+nom+" ajouté(e)")){S.form["s-nom"]=S.form["s-prenom"]="";await loadRef();render()}break}
+    case "form-l":{const nom=v("l-nom").trim(),unite=v("l-unite")||"Botte";if(!nom)return;
+      const ordre=S.legumes.reduce((m,l)=>Math.max(m,l.ordre||0),0)+1;
+      if(await run(sb.from("legumes").insert({nom,unite,ordre}),nom+" ajouté")){S.form["l-nom"]="";await loadRef();render()}break}
+    case "form-es":{const nom=v("es-nom").trim(),prenom=v("es-prenom").trim();if(!nom||!prenom)return;
+      if(await run(sb.from("saisonniers").update({nom,prenom}).eq("id",Number(f.dataset.id)),"Saisonnier modifié")){S.editCfg=null;await loadRef();render()}break}
+    case "form-el":{const nom=v("el-nom").trim(),unite=v("el-unite");if(!nom)return;
+      if(await run(sb.from("legumes").update({nom,unite}).eq("id",Number(f.dataset.id)),"Légume modifié")){S.editCfg=null;await loadRef();render()}break}
+    case "form-u":createAccount();break;
+    case "form-eu":{const nom=v("eu-nom").trim();if(!nom)return;const upd={nom};const r=document.getElementById("eu-role");if(r)upd.role=r.value;
+      if(await run(sb.from("profils").update(upd).eq("id",f.dataset.id),"Compte modifié")){S.editCfg=null;await loadProfils();if(f.dataset.id===S.profil.id)S.profil.nom=nom;render()}break}
+    case "form-pw":{const mdp=v("pw-new");if(mdp.length<6)return toast("Le mot de passe doit faire au moins 6 caractères.",true);
+      if(await run(sb.rpc("changer_mot_de_passe",{p_user:f.dataset.id,p_mdp:mdp}),"Mot de passe changé")){S.editCfg=null;S.form["pw-new"]="";render()}break}
+  }
+});
+
+/* ---------- démarrage ---------- */
+render();
+if(sb){
+  sb.auth.getSession().then(({data})=>onSession(data.session));
+  sb.auth.onAuthStateChange((ev,session)=>{if(ev==="INITIAL_SESSION")return;setTimeout(()=>onSession(session),0)});
+}else{S.booting=false;render()}
+})();
+</script>
+</body>
+</html>
