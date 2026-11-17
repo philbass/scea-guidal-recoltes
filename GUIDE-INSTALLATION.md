@@ -6,7 +6,8 @@ Contenu du dossier :
 
 | Fichier | Rôle |
 |---|---|
-| `app/` | L'application à mettre en ligne (page, logo, réglages) |
+| `app/` | L'application publiée sur GitHub Pages (page, logo, réglages) |
+| `.github/workflows/pages.yml` | La publication automatique sur GitHub Pages |
 | `app/config.js` | Le seul fichier à modifier : adresse et clé Supabase |
 | `supabase/schema.sql` | La base de données à créer dans Supabase |
 
@@ -46,7 +47,7 @@ Cliquez sur **Save**.
 3. Mot de passe : celui de votre choix (6 caractères minimum).
 4. Cochez **Auto Confirm User**, puis **Create user**.
 
-Vous vous connecterez avec l'identifiant **admin** et ce mot de passe. Vous pourrez changer le nom affiché dans l'onglet **Équipe** de l'application.
+Vous vous connecterez avec l'identifiant **admin** et ce mot de passe. Vous pourrez ensuite changer votre nom affiché et votre identifiant dans l'onglet **Équipe** de l'application.
 
 ## Étape 5 — Brancher l'application sur Supabase
 
@@ -59,20 +60,44 @@ Vous vous connecterez avec l'identifiant **admin** et ce mot de passe. Vous pour
 
 La clé anon est faite pour être publique : ce sont les droits de la base qui protègent les données. **Ne mettez jamais la clé `service_role`** dans ce fichier.
 
-## Étape 6 — Mettre l'application en ligne (Netlify, gratuit)
+## Étape 6 — Mettre l'application en ligne (GitHub Pages, gratuit)
 
-1. Allez sur https://app.netlify.com/drop et créez un compte gratuit.
-2. Glissez-déposez le **dossier `app`** entier dans la zone de dépôt.
-3. Netlify donne une adresse du type `https://nom-au-hasard.netlify.app`. Dans **Site configuration** → **Change site name**, vous pouvez la renommer, par exemple `scea-guidal-recoltes`.
+L'application est publiée depuis le dépôt GitHub **philbass/scea-guidal-recoltes** :
 
-Pour publier une mise à jour plus tard : **Deploys** → glissez de nouveau le dossier `app`.
+- Adresse de l'app : **https://philbass.github.io/scea-guidal-recoltes/**
+- Code source : https://github.com/philbass/scea-guidal-recoltes
+
+La publication est automatique : à chaque envoi sur la branche `main`, le fichier `.github/workflows/pages.yml` republie le dossier `app/` en une à deux minutes. Pour suivre une publication : onglet **Actions** du dépôt (coche verte = en ligne).
+
+**Pour publier une modification** (depuis le dossier du projet, dans un terminal) :
+
+```bash
+git add -A
+git commit -m "Description de la modification"
+git push
+```
+
+Sans terminal, on peut aussi modifier un fichier directement sur github.com (icône crayon → **Commit changes**) : l'app se republie de la même façon.
+
+**Pour réinstaller sur un autre compte GitHub** : créer un dépôt public, y envoyer le dossier du projet, puis **Settings** → **Pages** → **Source : GitHub Actions**. L'adresse devient `https://<compte>.github.io/<nom-du-dépôt>/`.
 
 ## Étape 7 — Premier essai
 
-1. Ouvrez l'adresse Netlify et connectez-vous avec **admin**.
-2. Onglet **Saisonniers et légumes** : ajoutez vos saisonniers.
-3. Onglet **Équipe** : créez un compte pour chaque chef d'équipe (nom, identifiant, mot de passe, rôle « Chef d'équipe »).
-4. Testez avec un compte chef sur un téléphone : il ne doit voir que l'écran de saisie.
+1. Ouvrez https://philbass.github.io/scea-guidal-recoltes/ et connectez-vous avec **admin**.
+2. Onglet **Équipe** → **Modifier** sur votre compte : changez votre nom affiché et, si vous le souhaitez, votre identifiant de connexion (à la place de « admin »).
+3. Onglet **Saisonniers et légumes** : ajoutez vos saisonniers.
+4. Onglet **Équipe** : créez un compte pour chaque chef d'équipe (nom, identifiant, mot de passe, rôle « Chef d'équipe »).
+5. Testez avec un compte chef sur un téléphone : il ne doit voir que l'écran de saisie.
+
+## Mises à jour de la base de données
+
+Certaines évolutions de l'app demandent d'ajouter une fonction dans Supabase. Le fichier correspondant se trouve dans `supabase/` et commence par `maj-`. À faire **une seule fois** par fichier : **SQL Editor** → **New query** → coller le contenu → **Run**.
+
+| Fichier | Apporte | À exécuter si |
+|---|---|---|
+| `maj-01-identifiant.sql` | Changer l'identifiant de connexion d'un compte | Vous avez installé la base avant le 17/11/2026 |
+
+Une installation neuve avec `schema.sql` contient déjà toutes les mises à jour.
 
 ## Installer l'app sur le téléphone
 
@@ -103,6 +128,8 @@ Ces règles sont appliquées par la base de données elle-même, pas seulement p
 | « Compte pas encore confirmé » | Désactiver **Confirm email** (étape 3) |
 | « Compte non activé » | Le compte a été désactivé dans **Équipe**, ou il a été créé dans Supabase sans invitation. Recréez-le depuis l'onglet Équipe. |
 | « Identifiant ou mot de passe incorrect » | Le responsable peut changer le mot de passe dans **Équipe** → **Mot de passe** |
+| « La base doit être mise à jour » | Exécuter le fichier `supabase/maj-…sql` indiqué (voir « Mises à jour de la base de données ») |
+| L'app affiche encore l'ancienne version | Attendre la fin de la publication (onglet **Actions** sur GitHub), puis recharger la page |
 | Les nouvelles saisies n'apparaissent pas toutes seules | Supabase → **Database** → **Publications** → `supabase_realtime` : vérifier que `recoltes` est coché |
 
 **Projet gratuit Supabase** : il se met en pause après 7 jours sans aucune utilisation. Pendant la saison, l'usage quotidien l'évite. Après une longue pause, il suffit de le relancer depuis le tableau de bord Supabase (**Restore project**).

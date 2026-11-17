@@ -116,6 +116,7 @@ tfoot td{font-weight:700;border-bottom:0;background:var(--surface-2)}
 .listcfg .it{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
 .listcfg .it:last-child{border-bottom:0}
 .listcfg .it .nm{flex:1;min-width:140px;font-weight:600}
+.listcfg .it.edit{align-items:flex-end}
 .listcfg .it.edit input,.listcfg .it.edit select{flex:1;min-width:110px;width:auto;min-height:38px;padding:7px 10px}
 .addform{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;align-items:end}
 dialog{border:1px solid var(--line);border-radius:14px;background:var(--bg);color:var(--fg);padding:0;width:min(520px,calc(100vw - 32px));max-height:calc(100vh - 40px)}
@@ -197,7 +198,8 @@ function errMsg(e){
   const m=(e&&(e.message||e.error_description))||String(e||"");
   if(/row-level security|permission denied|violates row-level/i.test(m))return "Action refusée : vous n'avez pas les droits, ou la date est hors de la période autorisée.";
   if(/Failed to fetch|NetworkError|network/i.test(m))return "Pas de connexion internet. Réessayez dans un instant.";
-  if(/Réservé|caractères/.test(m))return m;
+  if(/changer_identifiant|Could not find the function/i.test(m))return "La base doit être mise à jour : exécutez le fichier supabase/maj-01-identifiant.sql dans Supabase (voir le guide).";
+  if(/Réservé|caractères|Identifiant invalide|existe déjà|introuvable/.test(m))return m;
   return "Erreur : "+m;
 }
 
@@ -433,8 +435,8 @@ function viewSupervision(){
   const det=A.ents.slice().reverse().map(e=>`<tr><td>${esc(fmtDay(e.date))}</td><td>${esc(personName(e.sid))}</td>${A.legIds.map(k=>`<td class="n ${Number(e.q[k])?"":"zero"}">${fmtN(e.q[k])}</td>`).join("")}<td>${esc(parName(e.par))}${e.corr?` <span class="muted">· corrigé par ${esc(parName(e.corr))}</span>`:""}</td><td><button class="btn sm" data-edit="${e.date}|${e.sid}">Corriger</button></td></tr>`).join("");
   return `<div class="stack">${head}
     <div class="tiles">${tiles}</div>
-    <div><h3>Cumuls par saisonnier</h3><div class="tscroll"><table><thead><tr><th>Saisonnier</th>${th}<th class="n">Jours</th></tr></thead><tbody>${body}</tbody><tfoot>${foot}</tfoot></table></div></div>
     <div><h3>Saisies journalières</h3><div class="tscroll"><table><thead><tr><th>Date</th><th>Saisonnier</th>${th}<th>Saisi par</th><th></th></tr></thead><tbody>${det}</tbody></table></div></div>
+    <div><h3>Cumuls par saisonnier</h3><div class="tscroll"><table><thead><tr><th>Saisonnier</th>${th}<th class="n">Jours</th></tr></thead><tbody>${body}</tbody><tfoot>${foot}</tfoot></table></div></div>
   </div>`;
 }
 
@@ -474,7 +476,7 @@ function viewEquipe(){
   const E=S.editCfg;const me=S.profil.id;
   const roleSel=(id,val)=>`<select id="${id}" data-keep aria-label="Rôle"><option value="chef" ${val==="chef"?"selected":""}>Chef d'équipe</option><option value="responsable" ${val==="responsable"?"selected":""}>Responsable</option></select>`;
   const rows=S.profils.map(p=>{
-    if(E&&E.kind==="u"&&E.id===p.id)return `<form class="it edit" id="form-eu" data-id="${p.id}"><input id="eu-nom" data-keep aria-label="Nom affiché" value="${F("eu-nom")}" required>${p.id===me?"":roleSel("eu-role",S.form["eu-role"])}
+    if(E&&E.kind==="u"&&E.id===p.id)return `<form class="it edit" id="form-eu" data-id="${p.id}"><label class="f" style="flex:1;min-width:150px">Nom affiché<input id="eu-nom" data-keep value="${F("eu-nom")}" required></label><label class="f" style="flex:1;min-width:130px">Identifiant<input id="eu-ident" data-keep autocapitalize="none" spellcheck="false" value="${F("eu-ident")}" required></label>${p.id===me?"":`<label class="f" style="flex:1;min-width:150px">Rôle${roleSel("eu-role",S.form["eu-role"])}</label>`}
       <button class="btn sm primary">Enregistrer</button><button type="button" class="btn sm" data-act="cfg-cancel">Annuler</button></form>`;
     if(E&&E.kind==="pw"&&E.id===p.id)return `<form class="it edit" id="form-pw" data-id="${p.id}"><span class="nm">${esc(p.nom)}</span><input id="pw-new" data-keep type="text" autocomplete="new-password" placeholder="Nouveau mot de passe (6 caractères min.)" value="${F("pw-new")}" required>
       <button class="btn sm primary">Valider</button><button type="button" class="btn sm" data-act="cfg-cancel">Annuler</button></form>`;
@@ -598,7 +600,7 @@ document.addEventListener("click",async e=>{
   if(t.dataset.toggleL){const l=S.legumes.find(x=>x.id===t.dataset.toggleL);if(await run(sb.from("legumes").update({actif:!l.actif}).eq("id",Number(l.id)))){await loadRef();render()}return}
   if(t.dataset.editS){const p=S.saisonniers.find(x=>x.id===t.dataset.editS);S.editCfg={kind:"s",id:p.id};S.form["es-nom"]=p.nom;S.form["es-prenom"]=p.prenom;render();return}
   if(t.dataset.editL){const l=S.legumes.find(x=>x.id===t.dataset.editL);S.editCfg={kind:"l",id:l.id};S.form["el-nom"]=l.nom;S.form["el-unite"]=l.unite;render();return}
-  if(t.dataset.editU){const p=S.profils.find(x=>x.id===t.dataset.editU);S.editCfg={kind:"u",id:p.id};S.form["eu-nom"]=p.nom;S.form["eu-role"]=p.role;render();return}
+  if(t.dataset.editU){const p=S.profils.find(x=>x.id===t.dataset.editU);S.editCfg={kind:"u",id:p.id};S.form["eu-nom"]=p.nom;S.form["eu-ident"]=p.identifiant;S.form["eu-role"]=p.role;render();return}
   if(t.dataset.pw){S.editCfg={kind:"pw",id:t.dataset.pw};S.form["pw-new"]="";render();return}
   if(t.dataset.toggleU){const p=S.profils.find(x=>x.id===t.dataset.toggleU);if(await run(sb.from("profils").update({actif:!p.actif}).eq("id",p.id),p.actif?"Compte désactivé":"Compte réactivé")){await loadProfils();render()}return}
   switch(t.dataset.act){
@@ -645,8 +647,23 @@ document.addEventListener("submit",async e=>{
     case "form-el":{const nom=v("el-nom").trim(),unite=v("el-unite");if(!nom)return;
       if(await run(sb.from("legumes").update({nom,unite}).eq("id",Number(f.dataset.id)),"Légume modifié")){S.editCfg=null;await loadRef();render()}break}
     case "form-u":createAccount();break;
-    case "form-eu":{const nom=v("eu-nom").trim();if(!nom)return;const upd={nom};const r=document.getElementById("eu-role");if(r)upd.role=r.value;
-      if(await run(sb.from("profils").update(upd).eq("id",f.dataset.id),"Compte modifié")){S.editCfg=null;await loadProfils();if(f.dataset.id===S.profil.id)S.profil.nom=nom;render()}break}
+    case "form-eu":{
+      const id=f.dataset.id,p=S.profils.find(x=>x.id===id),nom=v("eu-nom").trim(),ident=v("eu-ident").trim().toLowerCase();
+      if(!p||!nom||!ident)return toast("Remplissez le nom et l'identifiant.",true);
+      const identChange=ident!==p.identifiant;
+      if(identChange){
+        if(!/^[a-z0-9._-]{2,40}$/.test(ident))return toast("Identifiant invalide : lettres minuscules sans accent, chiffres, point ou tiret.",true);
+        const {error}=await sb.rpc("changer_identifiant",{p_user:id,p_ident:ident});
+        if(error)return toast(errMsg(error),true);
+      }
+      const upd={nom};const r=document.getElementById("eu-role");if(r)upd.role=r.value;
+      const {data,error}=await sb.from("profils").update(upd).eq("id",id).select("id");
+      if(error)return toast(errMsg(error),true);
+      if(!data||!data.length)return toast("La base a refusé la modification. Reconnectez-vous avec un compte responsable.",true);
+      toast(identChange&&id===S.profil.id?"Compte modifié. Votre identifiant de connexion est maintenant : "+ident:"Compte modifié");
+      S.editCfg=null;await loadProfils();
+      if(id===S.profil.id){S.profil.nom=nom;S.profil.identifiant=ident}
+      render();break}
     case "form-pw":{const mdp=v("pw-new");if(mdp.length<6)return toast("Le mot de passe doit faire au moins 6 caractères.",true);
       if(await run(sb.rpc("changer_mot_de_passe",{p_user:f.dataset.id,p_mdp:mdp}),"Mot de passe changé")){S.editCfg=null;S.form["pw-new"]="";render()}break}
   }
