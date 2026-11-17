@@ -124,16 +124,20 @@ dialog::backdrop{background:rgba(10,20,15,.55)}
 dialog .dh{padding:16px 18px;background:var(--green);color:var(--on-green)}
 dialog .dh h3{color:var(--on-green);margin:0}
 dialog .db{padding:16px 18px;display:flex;flex-direction:column;gap:12px}
-/* Écran d'accueil « Plein champ » (identique en mode clair et sombre) */
-.splash{position:fixed;inset:0;z-index:100;background:#1E4736;color:#F2EFE6;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:env(safe-area-inset-top,0px) 16px env(safe-area-inset-bottom,0px)}
-.splash .em{width:112px;height:112px;animation:sp-pop .9s ease-out both}
-.splash .ttl{font-family:var(--display);font-size:2.1rem;font-weight:700;margin:16px 0 4px;letter-spacing:.01em}
-.splash .tg{font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;opacity:.8}
-.splash .bar{width:130px;height:3px;border-radius:2px;margin-top:28px;overflow:hidden;background:rgba(242,239,230,.18)}
-.splash .bar i{display:block;height:100%;width:40%;border-radius:2px;background:#C61D2D;animation:sp-slide 1.4s ease-in-out infinite}
-.splash .ft{position:absolute;left:16px;right:16px;bottom:calc(22px + env(safe-area-inset-bottom,0px));font-size:.72rem;letter-spacing:.08em;opacity:.65}
-@keyframes sp-slide{0%{transform:translateX(-100%)}100%{transform:translateX(260%)}}
+/* Écran d'accueil « Lever du jour » (identique en mode clair et sombre) */
+.splash{position:fixed;inset:0;z-index:100;background:#F2EFE6;color:#1E4736;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:env(safe-area-inset-top,0px) 16px calc(110px + env(safe-area-inset-bottom,0px))}
+.splash .em{width:120px;height:120px;animation:sp-pop .9s ease-out both}
+.splash .ttl{font-family:var(--display);font-size:2.2rem;font-weight:700;margin:16px 0 4px;letter-spacing:.01em}
+.splash .tg{font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:#5E6A61}
+.splash .dots{display:flex;gap:8px;margin-top:28px}
+.splash .dots i{width:9px;height:9px;border-radius:50%;background:#C61D2D;animation:sp-blink 1.2s infinite}
+.splash .dots i:nth-child(2){animation-delay:.2s}.splash .dots i:nth-child(3){animation-delay:.4s}
+.splash .field{position:absolute;left:0;right:0;bottom:0;height:calc(100px + env(safe-area-inset-bottom,0px));background:#1E4736}
+.splash .field svg{display:block;width:100%;height:100px}
+.splash .ft{position:absolute;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));font-size:.72rem;letter-spacing:.08em;color:#F2EFE6;opacity:.85}
+@keyframes sp-blink{0%,100%{opacity:.25}50%{opacity:1}}
 @keyframes sp-pop{0%{transform:translateY(14px) scale(.9);opacity:0}100%{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.splash .em,.splash .dots i{animation:none}}
 .qrbox{background:#fff;border-radius:12px;padding:10px;display:grid;place-items:center;align-self:center}
 .qrbox svg{width:220px;height:220px;display:block}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--green);color:var(--on-green);padding:12px 18px;border-radius:99px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:50;max-width:calc(100vw - 32px);text-align:center}
@@ -161,7 +165,7 @@ dialog .db{padding:16px 18px;display:flex;flex-direction:column;gap:12px}
   </symbol>
 </svg>
 
-<div id="root"><div class="splash" role="status" aria-label="Chargement de l'application"><svg class="em" aria-hidden="true"><use href="#radis"/></svg><div class="ttl">SCEA Guidal</div><div class="tg">Terroir &amp; Fraîcheur</div><div class="bar"><i></i></div><div class="ft">Production maraîchère · Bouafle · depuis 1995</div></div></div>
+<div id="root"><div class="splash" role="status" aria-label="Chargement de l'application"><svg class="em" aria-hidden="true"><use href="#radis"/></svg><div class="ttl">SCEA Guidal</div><div class="tg">Suivi des récoltes</div><div class="dots" aria-hidden="true"><i></i><i></i><i></i></div><div class="field" aria-hidden="true"><svg viewBox="0 0 260 100" preserveAspectRatio="none"><path d="M0 20 Q130 6 260 20M0 42 Q130 28 260 42M0 64 Q130 50 260 64M0 86 Q130 72 260 86" stroke="#2F6B3E" stroke-width="6" fill="none"/></svg></div><div class="ft">Terroir &amp; Fraîcheur · Bouafle · depuis 1995</div></div></div>
 <dialog id="dlg"></dialog>
 <div class="toast" id="toast" role="status" hidden></div>
 
