@@ -124,6 +124,18 @@ dialog::backdrop{background:rgba(10,20,15,.55)}
 dialog .dh{padding:16px 18px;background:var(--green);color:var(--on-green)}
 dialog .dh h3{color:var(--on-green);margin:0}
 dialog .db{padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+/* Écran d'accueil « Plein champ » (identique en mode clair et sombre) */
+.splash{position:fixed;inset:0;z-index:100;background:#1E4736;color:#F2EFE6;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:env(safe-area-inset-top,0px) 16px env(safe-area-inset-bottom,0px)}
+.splash .em{width:112px;height:112px;animation:sp-pop .9s ease-out both}
+.splash .ttl{font-family:var(--display);font-size:2.1rem;font-weight:700;margin:16px 0 4px;letter-spacing:.01em}
+.splash .tg{font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;opacity:.8}
+.splash .bar{width:130px;height:3px;border-radius:2px;margin-top:28px;overflow:hidden;background:rgba(242,239,230,.18)}
+.splash .bar i{display:block;height:100%;width:40%;border-radius:2px;background:#C61D2D;animation:sp-slide 1.4s ease-in-out infinite}
+.splash .ft{position:absolute;left:16px;right:16px;bottom:calc(22px + env(safe-area-inset-bottom,0px));font-size:.72rem;letter-spacing:.08em;opacity:.65}
+@keyframes sp-slide{0%{transform:translateX(-100%)}100%{transform:translateX(260%)}}
+@keyframes sp-pop{0%{transform:translateY(14px) scale(.9);opacity:0}100%{transform:none;opacity:1}}
+.qrbox{background:#fff;border-radius:12px;padding:10px;display:grid;place-items:center;align-self:center}
+.qrbox svg{width:220px;height:220px;display:block}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--green);color:var(--on-green);padding:12px 18px;border-radius:99px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:50;max-width:calc(100vw - 32px);text-align:center}
 .toast.err{background:var(--red)}
 @media (max-width:640px){
@@ -149,13 +161,14 @@ dialog .db{padding:16px 18px;display:flex;flex-direction:column;gap:12px}
   </symbol>
 </svg>
 
-<div id="root"></div>
+<div id="root"><div class="splash" role="status" aria-label="Chargement de l'application"><svg class="em" aria-hidden="true"><use href="#radis"/></svg><div class="ttl">SCEA Guidal</div><div class="tg">Terroir &amp; Fraîcheur</div><div class="bar"><i></i></div><div class="ft">Production maraîchère · Bouafle · depuis 1995</div></div></div>
 <dialog id="dlg"></dialog>
 <div class="toast" id="toast" role="status" hidden></div>
 
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
 (function(){
 "use strict";
@@ -172,6 +185,10 @@ const S={session:null,profil:null,booting:true,loginErr:"",loginBusy:false,
   view:"saisie",date:today(),search:"",selected:null,draft:{},form:{},editCfg:null,
   period:"mois",anchor:today()};
 let chan=null,reloadT=null,dayToken=0,rangeToken=0;
+const SPLASH=document.getElementById("root").innerHTML;
+const SPLASH_UNTIL=Date.now()+1300;
+const splashWait=()=>new Promise(r=>setTimeout(r,Math.max(0,SPLASH_UNTIL-Date.now())));
+try{const u=new URLSearchParams(location.search).get("u");if(u)S.form["l-ident"]=u.toLowerCase().slice(0,40)}catch(e){}
 
 /* ---------- utilitaires ---------- */
 function pad(n){return String(n).padStart(2,"0")}
@@ -189,6 +206,8 @@ function personName(id){const p=S.saisonniers.find(x=>x.id===String(id));return 
 function sortedPeople(list){return list.slice().sort((a,b)=>(a.nom+" "+a.prenom).localeCompare(b.nom+" "+b.prenom,"fr"))}
 const activeLegumes=()=>S.legumes.filter(l=>l.actif);
 const legLabel=l=>l.nom+" ("+(l.unite||"").toLowerCase()+")";
+/* pluriel des unités : botte → bottes, colis → colis, kg → kg */
+function plur(u,n){u=(u||"").toLowerCase();if(Math.abs(n||0)<2||u==="kg"||/[sxz]$/.test(u))return u;return u+"s"}
 const parName=id=>{if(!id)return "—";const p=S.profils.find(x=>x.id===id);return p?p.nom:"Ancien compte"};
 const roleLabel=r=>r==="responsable"?"Responsable":"Chef d'équipe";
 function store(k,v){try{localStorage.setItem(k,v)}catch(e){}}
@@ -296,15 +315,24 @@ async function onSession(session){
   if(session&&prev===session.user.id&&S.profil)return;
   if(chan){sb.removeChannel(chan);chan=null}
   S.profil=null;S.day=null;S.range=null;S.profils=[];S.selected=null;S.editCfg=null;
-  if(!session){S.booting=false;render();return}
+  if(!session){await splashWait();S.booting=false;render();tryStoredCredential();return}
   S.booting=true;render();
   const {data,error}=await sb.from("profils").select("*").eq("id",session.user.id).maybeSingle();
-  if(error||!data||!data.actif){S.profil={blocked:true,actif:false,nom:data?data.nom:""};S.booting=false;render();return}
+  if(error||!data||!data.actif){await splashWait();S.profil={blocked:true,actif:false,nom:data?data.nom:""};S.booting=false;render();return}
   S.profil=data;
   const v=load("guidal.view");S.view=(isResp()&&["saisie","supervision","parametres","equipe"].includes(v))?v:"saisie";
   try{await loadRef();await loadProfils()}catch(e){toast(errMsg(e),true)}
+  await splashWait();
   S.booting=false;
   loadDay();loadRange();subscribe();render();
+}
+/* Biométrie : le téléphone propose le mot de passe enregistré après Face ID / empreinte (Android : Credential Management ; iPhone : trousseau iCloud via le remplissage automatique) */
+let credTried=false;
+async function tryStoredCredential(){
+  if(credTried||!window.PasswordCredential||!navigator.credentials)return;
+  credTried=true;
+  try{const c=await navigator.credentials.get({password:true,mediation:"optional"});
+    if(c&&c.password&&!S.session){S.form["l-ident"]=c.id;login(c.id,c.password)}}catch(e){}
 }
 async function login(ident,mdp){
   ident=ident.trim().toLowerCase();
@@ -313,6 +341,7 @@ async function login(ident,mdp){
   const email=ident.includes("@")?ident:ident+"@"+DOMAIN;
   const {error}=await sb.auth.signInWithPassword({email,password:mdp});
   S.loginBusy=false;
+  if(!error&&window.PasswordCredential&&navigator.credentials){try{await navigator.credentials.store(new PasswordCredential({id:ident,password:mdp,name:ident}))}catch(e){}}
   if(error){
     S.loginErr=/Invalid login/i.test(error.message)?"Identifiant ou mot de passe incorrect.":
       /not confirmed/i.test(error.message)?"Compte pas encore confirmé. Le responsable doit désactiver « Confirm email » dans Supabase (voir le guide).":errMsg(error);
@@ -331,7 +360,7 @@ function render(){
 function renderScreen(){
   if(!CONFIGURED)return screenMsg("Configuration à terminer","Renseignez l'adresse et la clé de votre projet Supabase dans le fichier <b>config.js</b>, comme indiqué dans le guide d'installation.");
   if(!sb)return screenMsg("Chargement impossible","La bibliothèque de connexion n'a pas pu être chargée. Vérifiez la connexion internet puis rechargez la page.");
-  if(S.booting)return screenMsg("Chargement…","Connexion à la base de l'exploitation.");
+  if(S.booting)return SPLASH;
   if(!S.session)return screenLogin();
   if(!S.profil||S.profil.blocked)return screenMsg("Compte non activé","Ce compte n'a pas accès à l'application, ou il a été désactivé. Contactez le responsable de l'exploitation.",true);
   return screenApp();
@@ -344,10 +373,11 @@ function screenLogin(){
   return `<div class="login"><div class="card">
     <div class="top">${logo("")}<h1>SCEA Guidal</h1><div style="font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;opacity:.8">Terroir &amp; Fraîcheur · Suivi des récoltes</div></div>
     <form id="form-login" autocomplete="on">
-      <label class="f" for="l-ident">Identifiant<input id="l-ident" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="julien" required></label>
+      <label class="f" for="l-ident">Identifiant<input id="l-ident" name="username" data-keep value="${F("l-ident")}" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="julien" required></label>
       <label class="f" for="l-mdp">Mot de passe<input id="l-mdp" name="password" type="password" autocomplete="current-password" required></label>
       ${S.loginErr?`<div class="notice err">${esc(S.loginErr)}</div>`:""}
       <button class="btn primary" ${S.loginBusy?"disabled":""}>${S.loginBusy?"Connexion…":"Se connecter"}</button>
+      <p class="muted" style="font-size:.8rem">Sur téléphone, acceptez d'enregistrer le mot de passe quand il vous est proposé : la prochaine fois, Face ID ou votre empreinte suffira.</p>
       <p class="muted" style="font-size:.8rem">Pas de compte ou mot de passe oublié ? Demandez au responsable de l'exploitation.</p>
     </form></div></div>`;
 }
@@ -362,7 +392,7 @@ function screenApp(){
   return `<header class="brand"><div class="wrap">
       ${logo()}
       <div><div class="tag">Terroir &amp; Fraîcheur · depuis 1995</div><h1>SCEA Guidal</h1></div>
-      <div class="userbox"><div><div>${esc(S.profil.nom)}</div><div class="role">${roleLabel(S.profil.role)}</div></div><button class="btn-out" data-act="logout">Déconnexion</button></div>
+      <div class="userbox"><div><div>${esc(S.profil.nom)}</div><div class="role">${roleLabel(S.profil.role)}</div></div><div class="row" style="gap:8px">${resp?`<button class="btn-out" data-act="share" aria-label="Partager l'application"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:5px"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>Partager</button>`:""}<button class="btn-out" data-act="logout">Déconnexion</button></div></div>
     </div></header>
     ${resp?`<nav class="tabs" aria-label="Espaces"><div class="wrap" role="tablist">${tabs.map(([k,l])=>`<button role="tab" data-view="${k}" aria-selected="${view===k}">${l}</button>`).join("")}</div></nav>`:""}
     <main class="wrap">${body}</main>`;
@@ -427,7 +457,7 @@ function viewSupervision(){
   if(!S.range)return `<div class="stack">${head}<p class="muted">Chargement de la période…</p></div>`;
   const A=aggregate();
   if(!A.ents.length)return `<div class="stack">${head}<div class="panel"><h3>Aucune récolte sur cette période</h3><p class="muted">Les saisies des chefs d'équipe apparaissent ici en temps réel.</p></div></div>`;
-  const tiles=A.legs.map(l=>`<div class="tile"><div class="v">${fmtN(A.tot[l.id])}</div><div class="l">${esc((l.unite||"").toLowerCase())}s · ${esc(l.nom)}</div></div>`).join("")
+  const tiles=A.legs.map(l=>`<div class="tile"><div class="v">${fmtN(A.tot[l.id])}</div><div class="l">${esc(plur(l.unite,A.tot[l.id]))} · ${esc(l.nom)}</div></div>`).join("")
     +`<div class="tile"><div class="v">${A.rows.length}</div><div class="l">saisonniers ayant récolté</div></div>`;
   const th=A.legs.map(l=>`<th class="n">${esc(legLabel(l))}</th>`).join("");
   const body=A.rows.map(r=>`<tr><td>${esc(personName(r.sid))}</td>${A.legIds.map(k=>`<td class="n ${r.q[k]?"":"zero"}">${fmtN(r.q[k])}</td>`).join("")}<td class="n">${r.days.size}</td></tr>`).join("");
@@ -534,6 +564,35 @@ function openEdit(date,sid){
   };
 }
 
+/* ---------- partage de l'application ---------- */
+const appUrl=()=>location.origin+location.pathname;
+function openShare(){
+  const d=document.getElementById("dlg");
+  const team=S.profils.filter(p=>p.actif&&p.id!==S.profil.id);
+  d.innerHTML=`<div class="dh"><h3>Partager l'application</h3><div style="font-size:.85rem;opacity:.85">À scanner avec l'appareil photo du téléphone</div></div>
+   <div class="db">
+    <label class="f">Pour<select id="sh-who"><option value="">Tout le monde</option>${team.map(p=>`<option value="${esc(p.identifiant)}">${esc(p.nom)} (${esc(p.identifiant)})</option>`).join("")}</select></label>
+    <div class="qrbox" id="sh-qr"></div>
+    <label class="f">Lien<input id="sh-url" readonly></label>
+    <div class="row"><button type="button" class="btn primary" id="sh-copy">Copier le lien</button>${navigator.share?`<button type="button" class="btn" id="sh-native">Envoyer…</button>`:""}<button type="button" class="btn ghost" id="sh-close" style="margin-left:auto">Fermer</button></div>
+    <p class="muted" style="font-size:.85rem" id="sh-help"></p>
+   </div>`;
+  const upd=()=>{
+    const who=d.querySelector("#sh-who").value;const url=appUrl()+(who?"?u="+encodeURIComponent(who):"");
+    d.querySelector("#sh-url").value=url;
+    const box=d.querySelector("#sh-qr");
+    if(window.qrcode){const qr=qrcode(0,"M");qr.addData(url);qr.make();box.innerHTML=qr.createSvgTag({cellSize:6,margin:2,scalable:true})}
+    else box.textContent="QR code indisponible : utilisez le lien.";
+    d.querySelector("#sh-help").textContent=who?"L'identifiant « "+who+" » sera déjà rempli. Donnez le mot de passe à la personne de vive voix.":"La personne se connecte avec l'identifiant et le mot de passe créés dans l'onglet Équipe.";
+  };
+  d.querySelector("#sh-who").onchange=upd;upd();
+  d.querySelector("#sh-close").onclick=()=>d.close();
+  d.querySelector("#sh-copy").onclick=async()=>{const i=d.querySelector("#sh-url");try{await navigator.clipboard.writeText(i.value);toast("Lien copié")}catch(e){i.select();toast("Sélectionnez le lien puis copiez-le.",true)}};
+  const n=d.querySelector("#sh-native");
+  if(n)n.onclick=async()=>{try{await navigator.share({title:"SCEA Guidal – Suivi Récoltes",text:"Application de saisie des récoltes",url:d.querySelector("#sh-url").value})}catch(e){}};
+  d.showModal();
+}
+
 /* ---------- export ---------- */
 function exportRows(){
   const A=aggregate();const [a,b]=periodRange();
@@ -604,7 +663,8 @@ document.addEventListener("click",async e=>{
   if(t.dataset.pw){S.editCfg={kind:"pw",id:t.dataset.pw};S.form["pw-new"]="";render();return}
   if(t.dataset.toggleU){const p=S.profils.find(x=>x.id===t.dataset.toggleU);if(await run(sb.from("profils").update({actif:!p.actif}).eq("id",p.id),p.actif?"Compte désactivé":"Compte réactivé")){await loadProfils();render()}return}
   switch(t.dataset.act){
-    case "logout":await sb.auth.signOut();break;
+    case "logout":try{if(navigator.credentials&&navigator.credentials.preventSilentAccess)await navigator.credentials.preventSilentAccess()}catch(e){}await sb.auth.signOut();break;
+    case "share":openShare();break;
     case "cfg-cancel":S.editCfg=null;render();break;
     case "back":S.selected=null;render();break;
     case "validate":{
