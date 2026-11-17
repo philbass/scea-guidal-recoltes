@@ -4,3 +4,6 @@ suivi-recoltes.html
 Thumbs.db
 desktop.ini
 .DS_Store
+# Exports de paie (données personnelles, dépôt public)
+*.xlsx
+*.csv

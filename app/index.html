@@ -19,6 +19,7 @@
   --green:#1E4736; --green-ink:#1E4736; --red:#C61D2D; --ok:#2E7D32; --ok-mark:#50AF54;
   --bg:#F2EFE6; --surface:#FBFAF5; --surface-2:#E9E5D8; --line:#D9D3C2;
   --fg:#1F2A24; --muted:#5E6A61; --on-green:#F2EFE6; --ok-bg:#E3F1E1; --red-bg:#F8E1E2;
+  --warn:#8A5A00; --warn-bg:#FBF0D9;
   --display:"Playfair Display", Georgia, "Times New Roman", serif;
   --body:"Montserrat", "Segoe UI", system-ui, sans-serif;
   --r:10px; color-scheme:light;
@@ -26,7 +27,8 @@
 @media (prefers-color-scheme: dark){:root{
   --green:#173A2B; --green-ink:#8CC9A0; --red:#E2535F; --ok:#7BCB80; --ok-mark:#6CC070;
   --bg:#121A16; --surface:#1A2520; --surface-2:#223029; --line:#2F3F36;
-  --fg:#ECE8DD; --muted:#A3AFA6; --on-green:#F2EFE6; --ok-bg:#1F3524; --red-bg:#3A1C20; color-scheme:dark}}
+  --fg:#ECE8DD; --muted:#A3AFA6; --on-green:#F2EFE6; --ok-bg:#1F3524; --red-bg:#3A1C20;
+  --warn:#F0C46A; --warn-bg:#3A3018; color-scheme:dark}}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45;min-height:100vh}
@@ -40,6 +42,9 @@ header.brand .wrap{display:flex;align-items:center;gap:12px;padding-block:12px;f
 .userbox{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:.85rem}
 .userbox .role{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;opacity:.8}
 .btn-out{background:none;border:1px solid rgba(242,239,230,.45);color:var(--on-green);border-radius:8px;padding:7px 12px;font:600 .8rem var(--body);cursor:pointer}
+.lang{display:inline-flex;border:1px solid rgba(242,239,230,.5);border-radius:99px;overflow:hidden;flex:none}
+.lang button{background:none;border:0;color:var(--on-green);font:700 .75rem var(--body);padding:7px 11px;cursor:pointer;letter-spacing:.05em;min-height:34px}
+.lang button[aria-pressed="true"]{background:var(--on-green);color:#1E4736}
 nav.tabs{background:var(--green);border-top:1px solid rgba(255,255,255,.12)}
 nav.tabs .wrap{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
 nav.tabs button{background:none;border:0;color:var(--on-green);opacity:.75;font:600 .9rem var(--body);padding:12px 14px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
@@ -63,20 +68,25 @@ input,select{font:500 1rem var(--body);color:var(--fg);background:var(--surface)
 .btn.danger{color:var(--red);border-color:var(--red);background:none}
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .btn.sm{padding:6px 12px;min-height:34px;font-size:.85rem}
+.btn.ico{padding:4px 9px;min-height:30px;font-size:.85rem}
 .notice{padding:10px 14px;border-radius:8px;background:var(--surface-2);font-size:.9rem}
 .notice.err{background:var(--red-bg)}
+.notice.warn{background:var(--warn-bg);color:var(--fg)}
 .badge{display:inline-flex;align-items:center;gap:4px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:3px 8px;border-radius:99px;white-space:nowrap}
 .badge.ok{background:var(--ok-bg);color:var(--ok)}
 .badge.todo{background:var(--surface-2);color:var(--muted)}
 .badge.off{background:var(--red-bg);color:var(--red)}
+.badge.warn{background:var(--warn-bg);color:var(--warn)}
 .badge.role{background:var(--surface-2);color:var(--green-ink)}
+.demo-bar{background:#E0A526;color:#2a1f00;font-size:.8rem;font-weight:600;text-align:center;padding:6px 12px;display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap}
+.demo-bar button{font:600 .75rem var(--body);border:1px solid #2a1f00;background:none;border-radius:6px;padding:3px 9px;cursor:pointer;color:#2a1f00}
 /* Connexion */
 .login{min-height:100vh;display:grid;place-items:center;padding:24px max(16px,env(safe-area-inset-left,0px))}
 .login .card{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
 .login .top{background:var(--green);color:var(--on-green);padding:24px;text-align:center}
 .login .top svg{width:84px;height:84px}
 .login .top h1{font-family:var(--display);margin:8px 0 2px;font-size:1.6rem}
-.login form{padding:22px;display:flex;flex-direction:column;gap:14px}
+.login form,.login .demo{padding:22px;display:flex;flex-direction:column;gap:14px}
 /* Saisie */
 .people{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--surface)}
 .person{display:flex;align-items:center;gap:12px;padding:14px 16px;border:0;border-bottom:1px solid var(--line);background:none;text-align:left;font:inherit;color:inherit;cursor:pointer;min-height:60px;width:100%}
@@ -84,13 +94,29 @@ input,select{font:500 1rem var(--body);color:var(--fg);background:var(--surface)
 .person:hover{background:var(--surface-2)}
 .person .nm{font-weight:600;flex:1;min-width:0}
 .person .sum{font-size:.8rem;color:var(--muted);font-weight:500}
+.sec{display:flex;align-items:center;gap:10px;margin-top:6px}
+.sec h4{margin:0;font:700 .78rem var(--body);text-transform:uppercase;letter-spacing:.1em;color:var(--green-ink)}
+.sec .ln{flex:1;height:1px;background:var(--line)}
+.sec .chip{font-size:.72rem;font-weight:600;color:var(--muted)}
 .grid-q{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
 .qrow{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.qrow.filled{border-color:var(--ok-mark);box-shadow:inset 3px 0 0 var(--ok-mark)}
 .qrow .lg{font-weight:600}
 .qrow .un{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
 .stepper{display:flex;align-items:center;gap:6px;flex:none}
 .stepper button{width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--surface-2);color:var(--green-ink);font:700 1.4rem var(--body);cursor:pointer;line-height:1}
 .stepper input{width:84px;text-align:center;font-weight:700;font-size:1.15rem;font-variant-numeric:tabular-nums;padding-inline:4px}
+.hours{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.hcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.hcard .hd{font-weight:700;margin-bottom:8px}
+.hcard .tm{display:flex;align-items:center;gap:8px}
+.hcard .tm input{font-weight:700;font-variant-numeric:tabular-nums;text-align:center}
+.total{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--green);color:var(--on-green);border-radius:var(--r);padding:10px 16px;font-weight:600;flex-wrap:wrap}
+.total strong{font-family:var(--display);font-size:1.4rem;font-variant-numeric:tabular-nums}
+.total .btn{background:none;color:var(--on-green);border-color:rgba(242,239,230,.45)}
+.meter{font-size:.85rem;padding:10px 14px;border-radius:8px;background:var(--ok-bg);color:var(--ok);font-weight:600}
+.meter.over{background:var(--red-bg);color:var(--red)}
+.meter.info{background:var(--surface-2);color:var(--muted)}
 .actionbar{position:sticky;bottom:0;background:var(--bg);padding-block:12px calc(12px + env(safe-area-inset-bottom,0px));display:flex;gap:10px;border-top:1px solid var(--line);margin-top:4px}
 .actionbar .btn.validate{flex:1;font-size:1.05rem}
 /* Supervision */
@@ -103,23 +129,33 @@ input,select{font:500 1rem var(--body);color:var(--fg);background:var(--surface)
 .tile{padding:14px 16px;border-radius:var(--r);background:var(--surface);border:1px solid var(--line)}
 .tile .v{font-family:var(--display);font-size:1.9rem;color:var(--green-ink);font-variant-numeric:tabular-nums;line-height:1.1}
 .tile .l{font-size:.8rem;color:var(--muted)}
+.tile.money{background:var(--green);border-color:var(--green)}
+.tile.money .v,.tile.money .l{color:var(--on-green)}
 .tscroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
 table{border-collapse:collapse;width:100%;font-size:.9rem}
 th,td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
 th{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--surface-2)}
 td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+td.grp{background:var(--surface-2);font-weight:700;color:var(--green-ink)}
 tfoot td{font-weight:700;border-bottom:0;background:var(--surface-2)}
+tr[data-sel-s]{cursor:pointer}
+tr[data-sel-s]:hover td{background:var(--surface-2)}
+tr.sel td,tr.sel:hover td{background:var(--ok-bg)}
 .zero{color:var(--line)}
-/* Listes de paramètres */
-.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+.eur{font-weight:700;color:var(--green-ink)}
+details>summary{cursor:pointer;font-family:var(--display);font-size:1.15rem;color:var(--green-ink);margin-bottom:10px}
+/* Paramètres */
+.split{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;align-items:start}
+.addform{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;align-items:end}
 .listcfg{display:flex;flex-direction:column}
 .listcfg .it{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
 .listcfg .it:last-child{border-bottom:0}
 .listcfg .it .nm{flex:1;min-width:140px;font-weight:600}
 .listcfg .it.edit{align-items:flex-end}
 .listcfg .it.edit input,.listcfg .it.edit select{flex:1;min-width:110px;width:auto;min-height:38px;padding:7px 10px}
-.addform{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;align-items:end}
-dialog{border:1px solid var(--line);border-radius:14px;background:var(--bg);color:var(--fg);padding:0;width:min(520px,calc(100vw - 32px));max-height:calc(100vh - 40px)}
+td form.inl{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;align-items:end;white-space:normal;padding:4px 0}
+td form.inl input,td form.inl select{min-height:38px;padding:7px 10px}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--bg);color:var(--fg);padding:0;width:min(560px,calc(100vw - 32px));max-height:calc(100vh - 40px)}
 dialog::backdrop{background:rgba(10,20,15,.55)}
 dialog .dh{padding:16px 18px;background:var(--green);color:var(--on-green)}
 dialog .dh h3{color:var(--on-green);margin:0}
@@ -142,11 +178,14 @@ dialog .db{padding:16px 18px;display:flex;flex-direction:column;gap:12px}
 .qrbox svg{width:220px;height:220px;display:block}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--green);color:var(--on-green);padding:12px 18px;border-radius:99px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:50;max-width:calc(100vw - 32px);text-align:center}
 .toast.err{background:var(--red)}
+@media (max-width:860px){.split{grid-template-columns:1fr}}
 @media (max-width:640px){
   .userbox{margin-left:0;width:100%;justify-content:space-between}
   .periodnav strong{min-width:0;flex:1}
   .periodnav{width:100%}
   h2{font-size:1.3rem}
+  .stepper button{width:42px;height:42px}
+  .stepper input{width:70px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -170,6 +209,7 @@ dialog .db{padding:16px 18px;display:flex;flex-direction:column;gap:12px}
 <div class="toast" id="toast" role="status" hidden></div>
 
 <script src="config.js"></script>
+<script>if(/[?&]demo\b/.test(location.search))document.write('<script src="demo.js"><\/script>');</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
@@ -178,17 +218,45 @@ dialog .db{padding:16px 18px;display:flex;flex-direction:column;gap:12px}
 "use strict";
 const CFG=window.GUIDAL_CONFIG||{};
 const DOMAIN=CFG.domaineIdentifiants||"scea-guidal.app";
-const CONFIGURED=!!(CFG.supabaseUrl&&CFG.supabaseAnonKey&&!/VOTRE/.test(CFG.supabaseUrl+CFG.supabaseAnonKey));
-const sb=(CONFIGURED&&window.supabase)?window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey):null;
-const UNITES=["Botte","Colis","Cageot","Kg"];
+const DEMO=/[?&]demo\b/.test(location.search)&&!!window.GUIDAL_DEMO;
+const CONFIGURED=DEMO||!!(CFG.supabaseUrl&&CFG.supabaseAnonKey&&!/VOTRE/.test(CFG.supabaseUrl+CFG.supabaseAnonKey));
+const sb=DEMO?window.GUIDAL_DEMO:((CONFIGURED&&window.supabase)?window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey):null);
+const MODES=["colis","unite","heure"];
+const MODE_LABEL={colis:"Au colis",unite:"À l'unité",heure:"À l'heure"};
+const MODE_UNIT={colis:"colis",unite:"unité",heure:"heure"};
 const CHEF_JOURS=7;
+const PRIX_ORIGINE="2000-01-01";
+
+/* ---------- textes de l'écran de saisie (français / portugais) ---------- */
+const I18N={
+ fr:{saisie:"Saisie",saisieJour:"Saisie du jour",nSaisis:(d,n)=>`${d} / ${n} saisis`,date:"Date",search:"Rechercher un saisonnier",searchPh:"Nom ou prénom",
+  done:"✓ Saisi",todo:"À saisir",back:"← Retour à la liste",already:"Déjà saisi · la validation remplace",horaires:"Horaires",matin:"Matin",am:"Après-midi",
+  debut:"Début",fin:"Fin",presence:"Présence",same:"Mêmes horaires que la saisie précédente",colis:"Au colis",unite:"À l'unité",heure:"À l'heure",
+  u_colis:"colis",u_unite:"unités",u_heure:"heures",step:"pas de 0,5 h",validate:"Valider la saisie",sending:"Envoi…",saved:"Saisie enregistrée",
+  mOk:(hh,t,p)=>`✓ ${hh} à l'heure · ${t} à la tâche · présence ${p}`,mOver:(hh,p)=>`⚠ ${hh} à l'heure, mais seulement ${p} de présence`,
+  mInfo:"Saisissez les horaires pour calculer la présence.",errPair:"Horaires incomplets : indiquez le début et la fin.",errOrder:"L'heure de fin doit être après l'heure de début.",
+  errEmpty:"Rien à enregistrer : saisissez des horaires ou des quantités.",errOver:"Les heures « à l'heure » dépassent la présence. Corrigez avant de valider.",
+  noLegs:"Aucun produit actif. Le responsable les ajoute dans « Produits et tarifs ».",noPeople:"Aucun saisonnier actif",noPeopleChef:"Le responsable doit d'abord ajouter les saisonniers.",
+  noPeopleResp:"Ajoutez les saisonniers dans l'onglet « Saisonniers ».",loadingDay:"Chargement de la journée…",noMatch:s=>`Aucun saisonnier ne correspond à « ${s} ».`,
+  logout:"Déconnexion",minus:"Retirer",plus:"Ajouter",locale:"fr-FR"},
+ pt:{saisie:"Registo",saisieJour:"Registo do dia",nSaisis:(d,n)=>`${d} / ${n} registados`,date:"Data",search:"Procurar trabalhador",searchPh:"Nome ou apelido",
+  done:"✓ Registado",todo:"Por registar",back:"← Voltar à lista",already:"Já registado · validar substitui",horaires:"Horário",matin:"Manhã",am:"Tarde",
+  debut:"Início",fin:"Fim",presence:"Presença",same:"Mesmo horário que o registo anterior",colis:"À caixa",unite:"À unidade",heure:"À hora",
+  u_colis:"caixas",u_unite:"unidades",u_heure:"horas",step:"passo de 0,5 h",validate:"Validar registo",sending:"A enviar…",saved:"Registo guardado",
+  mOk:(hh,t,p)=>`✓ ${hh} à hora · ${t} à tarefa · presença ${p}`,mOver:(hh,p)=>`⚠ ${hh} à hora, mas só ${p} de presença`,
+  mInfo:"Indique o horário para calcular a presença.",errPair:"Horário incompleto: indique o início e o fim.",errOrder:"A hora de fim deve ser depois da hora de início.",
+  errEmpty:"Nada a guardar: indique um horário ou quantidades.",errOver:"As horas « à hora » ultrapassam a presença. Corrija antes de validar.",
+  noLegs:"Nenhum produto ativo.",noPeople:"Nenhum trabalhador ativo",noPeopleChef:"O responsável tem de adicionar os trabalhadores primeiro.",
+  noPeopleResp:"Adicione os trabalhadores no separador « Saisonniers ».",loadingDay:"A carregar o dia…",noMatch:s=>`Nenhum trabalhador corresponde a « ${s} ».`,
+  logout:"Sair",minus:"Tirar",plus:"Juntar",locale:"pt-PT"}
+};
 
 const S={session:null,profil:null,booting:true,loginErr:"",loginBusy:false,
-  saisonniers:[],legumes:[],profils:[],invitations:[],
-  day:null,range:null,
-  view:"saisie",date:today(),search:"",selected:null,draft:{},form:{},editCfg:null,
-  period:"mois",anchor:today()};
-let chan=null,reloadT=null,dayToken=0,rangeToken=0;
+  saisonniers:[],legumes:[],profils:[],invitations:[],tarifs:[],smic:[],
+  day:null,range:null,mois:null,
+  view:"saisie",date:today(),search:"",selected:null,draft:{},hdraft:{},lastH:null,form:{},editCfg:null,
+  period:"mois",anchor:today(),lang:"fr",sFilter:"actifs",sSearch:"",selS:null};
+let chan=null,reloadT=null,dayToken=0,rangeToken=0,moisToken=0;
 const SPLASH=document.getElementById("root").innerHTML;
 const SPLASH_UNTIL=Date.now()+1300;
 const splashWait=()=>new Promise(r=>setTimeout(r,Math.max(0,SPLASH_UNTIL-Date.now())));
@@ -201,29 +269,63 @@ function today(){return iso(new Date())}
 function parse(s){const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)}
 function addDays(s,n){const d=parse(s);d.setDate(d.getDate()+n);return iso(d)}
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function store(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+function load(k){try{return localStorage.getItem(k)}catch(e){return null}}
+S.lang=load("guidal.lang")==="pt"?"pt":"fr";
+const T=(k,...a)=>{const v=I18N[S.lang][k]??I18N.fr[k];return typeof v==="function"?v(...a):v};
 const nf=new Intl.NumberFormat("fr-FR",{maximumFractionDigits:2});
 const fmtN=n=>nf.format(n||0);
-const fmtDay=s=>new Intl.DateTimeFormat("fr-FR",{weekday:"short",day:"numeric",month:"short"}).format(parse(s));
-const fmtLong=s=>new Intl.DateTimeFormat("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"}).format(parse(s));
+const ef=new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR"});
+const fmtE=n=>ef.format(n||0);
+const fmtDay=(s,loc)=>new Intl.DateTimeFormat(loc||"fr-FR",{weekday:"short",day:"numeric",month:"short"}).format(parse(s));
+const fmtLong=(s,loc)=>new Intl.DateTimeFormat(loc||"fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"}).format(parse(s));
+const fmtDate=s=>s===PRIX_ORIGINE?"toujours":new Intl.DateTimeFormat("fr-FR").format(parse(s));
 const isResp=()=>S.profil&&S.profil.role==="responsable";
 function personName(id){const p=S.saisonniers.find(x=>x.id===String(id));return p?(p.nom.toUpperCase()+" "+p.prenom):"Saisonnier retiré"}
 function sortedPeople(list){return list.slice().sort((a,b)=>(a.nom+" "+a.prenom).localeCompare(b.nom+" "+b.prenom,"fr"))}
+const legById=id=>S.legumes.find(l=>l.id===String(id));
 const activeLegumes=()=>S.legumes.filter(l=>l.actif);
-const legLabel=l=>l.nom+" ("+(l.unite||"").toLowerCase()+")";
-/* pluriel des unités : botte → bottes, colis → colis, kg → kg */
-function plur(u,n){u=(u||"").toLowerCase();if(Math.abs(n||0)<2||u==="kg"||/[sxz]$/.test(u))return u;return u+"s"}
+const lname=l=>S.lang==="pt"&&l.nom_pt?l.nom_pt:l.nom;
+/* unités : « 3 colis », « 1 unité », « 120 unités », « 2,5 h » */
+function unitShort(mode,n,lang){
+  if(mode==="heure")return "h";
+  if(lang==="pt")return mode==="colis"?(Math.abs(n)<2?"caixa":"caixas"):(Math.abs(n)<2?"unidade":"unidades");
+  return mode==="colis"?"colis":(Math.abs(n)<2?"unité":"unités");
+}
+/* horaires : « 07:30 » ; durées en heures décimales ; affichage « 8 h 30 » */
+const fmtT=s=>s?String(s).slice(0,5):"";
+function tmin(s){if(!s)return null;const [h,m]=String(s).slice(0,5).split(":").map(Number);return h*60+m}
+function span(a,b){const x=tmin(a),y=tmin(b);return x!=null&&y!=null&&y>x?(y-x)/60:0}
+const presH=h=>h?span(h.md,h.mf)+span(h.ad,h.af):0;
+function fmtH(h){const t=Math.round((h||0)*60);return Math.floor(t/60)+" h "+pad(t%60)}
+const halfDay=(a,b)=>a&&b?fmtT(a)+"–"+fmtT(b):"—";
 const parName=id=>{if(!id)return "—";const p=S.profils.find(x=>x.id===id);return p?p.nom:"Ancien compte"};
 const roleLabel=r=>r==="responsable"?"Responsable":"Chef d'équipe";
-function store(k,v){try{localStorage.setItem(k,v)}catch(e){}}
-function load(k){try{return localStorage.getItem(k)}catch(e){return null}}
-function toast(msg,err){const t=document.getElementById("toast");t.textContent=msg;t.className="toast"+(err?" err":"");t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,3200)}
+function toast(msg,err){const t=document.getElementById("toast");t.textContent=msg;t.className="toast"+(err?" err":"");t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,3600)}
 function errMsg(e){
   const m=(e&&(e.message||e.error_description))||String(e||"");
   if(/row-level security|permission denied|violates row-level/i.test(m))return "Action refusée : vous n'avez pas les droits, ou la date est hors de la période autorisée.";
   if(/Failed to fetch|NetworkError|network/i.test(m))return "Pas de connexion internet. Réessayez dans un instant.";
-  if(/changer_identifiant|Could not find the function/i.test(m))return "La base doit être mise à jour : exécutez le fichier supabase/maj-01-identifiant.sql dans Supabase (voir le guide).";
+  if(/changer_identifiant/i.test(m))return "La base doit être mise à jour : exécutez le fichier supabase/maj-01-identifiant.sql dans Supabase (voir le guide).";
+  if(/enregistrer_journee|presences|tarifs|smic|nom_pt|column .*mode/i.test(m))return "La base doit être mise à jour : exécutez le fichier supabase/maj-02-paie.sql dans Supabase (voir le guide).";
   if(/Réservé|caractères|Identifiant invalide|existe déjà|introuvable/.test(m))return m;
   return "Erreur : "+m;
+}
+
+/* ---------- tarifs ---------- */
+function priceAt(lid,date){let b=null;for(const t of S.tarifs)if(t.lid===String(lid)&&t.depuis<=date&&(!b||t.depuis>b.depuis))b=t;return b?b.prix:null}
+function smicAt(date){let b=null;for(const t of S.smic)if(t.depuis<=date&&(!b||t.depuis>b.depuis))b=t;return b?b.taux:null}
+const tarifsOf=lid=>S.tarifs.filter(t=>t.lid===String(lid)).sort((a,b)=>b.depuis.localeCompare(a.depuis));
+/* montant d'une journée */
+function value(e){
+  const v={tache:0,heure:0,total:0,colis:0,unites:0,hh:0,pres:presH(e.h),smicMin:0,missing:false};
+  for(const [k,q] of Object.entries(e.q)){
+    if(!(q>0))continue;const l=legById(k);if(!l)continue;
+    const p=priceAt(k,e.date);if(p==null)v.missing=true;const m=(p||0)*q;
+    if(l.mode==="heure"){v.hh+=q;v.heure+=m}else{v.tache+=m;if(l.mode==="colis")v.colis+=q;else v.unites+=q}
+  }
+  v.total=v.tache+v.heure;const sm=smicAt(e.date);if(sm)v.smicMin=v.pres*sm;
+  return v;
 }
 
 /* ---------- périodes ---------- */
@@ -231,12 +333,14 @@ function periodRange(){
   const a=S.anchor;
   if(S.period==="jour")return [a,a];
   if(S.period==="semaine"){const d=parse(a);const dow=(d.getDay()+6)%7;const start=addDays(a,-dow);return [start,addDays(start,6)]}
-  const d=parse(a);return [iso(new Date(d.getFullYear(),d.getMonth(),1)),iso(new Date(d.getFullYear(),d.getMonth()+1,0))];
+  return monthRange(a);
 }
+function monthRange(a){const d=parse(a);return [iso(new Date(d.getFullYear(),d.getMonth(),1)),iso(new Date(d.getFullYear(),d.getMonth()+1,0))]}
+const monthLabel=a=>new Intl.DateTimeFormat("fr-FR",{month:"long",year:"numeric"}).format(parse(a));
 function periodLabel(){
   const [a,b]=periodRange();
   if(S.period==="jour")return fmtLong(a);
-  if(S.period==="mois")return new Intl.DateTimeFormat("fr-FR",{month:"long",year:"numeric"}).format(parse(a));
+  if(S.period==="mois")return monthLabel(a);
   return "Semaine du "+fmtDay(a)+" au "+fmtDay(b);
 }
 function shiftPeriod(dir){
@@ -247,38 +351,44 @@ function shiftPeriod(dir){
 }
 
 /* ---------- données ---------- */
-async function fetchRecoltes(a,b){
+async function fetchAll(table,cols,a,b){
   const out=[];
   for(let from=0;;from+=1000){
-    const {data,error}=await sb.from("recoltes").select("date,saisonnier_id,legume_id,quantite,saisi_par,corrige_par").gte("date",a).lte("date",b).order("id").range(from,from+999);
+    const {data,error}=await sb.from(table).select(cols).gte("date",a).lte("date",b).order("id").range(from,from+999);
     if(error)throw error;
     out.push(...data);
     if(data.length<1000)break;
   }
   return out;
 }
-function group(rows){
+async function fetchDays(a,b){
+  const [r,p]=await Promise.all([
+    fetchAll("recoltes","date,saisonnier_id,legume_id,quantite,saisi_par,corrige_par",a,b),
+    fetchAll("presences","date,saisonnier_id,matin_debut,matin_fin,am_debut,am_fin,saisi_par,corrige_par",a,b)]);
   const m={};
-  for(const r of rows){
-    const k=r.date+"|"+r.saisonnier_id;
-    const e=m[k]||(m[k]={date:r.date,sid:String(r.saisonnier_id),q:{},par:r.saisi_par,corr:r.corrige_par});
-    e.q[String(r.legume_id)]=Number(r.quantite);
-    if(r.corrige_par)e.corr=r.corrige_par;
-  }
+  const get=(d,s,par)=>{const k=d+"|"+s;return m[k]||(m[k]={date:d,sid:String(s),q:{},h:null,par,corr:null})};
+  for(const x of r){const e=get(x.date,x.saisonnier_id,x.saisi_par);e.q[String(x.legume_id)]=Number(x.quantite);if(x.corrige_par)e.corr=x.corrige_par}
+  for(const x of p){const e=get(x.date,x.saisonnier_id,x.saisi_par);e.h={md:fmtT(x.matin_debut),mf:fmtT(x.matin_fin),ad:fmtT(x.am_debut),af:fmtT(x.am_fin)};if(x.corrige_par)e.corr=x.corrige_par}
   return Object.values(m).sort((x,y)=>x.date.localeCompare(y.date)||personName(x.sid).localeCompare(personName(y.sid),"fr"));
 }
 async function loadRef(){
   const [s,l]=await Promise.all([
     sb.from("saisonniers").select("id,nom,prenom,actif"),
-    sb.from("legumes").select("id,nom,unite,actif,ordre").order("ordre").order("id")]);
+    sb.from("legumes").select("id,nom,nom_pt,mode,actif,ordre").order("ordre").order("id")]);
   if(s.error)throw s.error; if(l.error)throw l.error;
   S.saisonniers=s.data.map(x=>({...x,id:String(x.id)}));
-  S.legumes=l.data.map(x=>({...x,id:String(x.id)}));
+  S.legumes=l.data.map(x=>({...x,id:String(x.id)})).sort((a,b)=>MODES.indexOf(a.mode)-MODES.indexOf(b.mode)||(a.ordre-b.ordre)||(a.id-b.id));
+  if(isResp()){
+    const [t,m]=await Promise.all([sb.from("tarifs").select("id,legume_id,prix,depuis"),sb.from("smic").select("depuis,taux")]);
+    if(t.error)throw t.error; if(m.error)throw m.error;
+    S.tarifs=t.data.map(x=>({id:x.id,lid:String(x.legume_id),prix:Number(x.prix),depuis:x.depuis}));
+    S.smic=m.data.map(x=>({depuis:x.depuis,taux:Number(x.taux)}));
+  }
 }
 async function loadDay(){
   const t=++dayToken;
-  try{const rows=await fetchRecoltes(S.date,S.date);if(t!==dayToken)return;
-    const m={};for(const e of group(rows))m[e.sid]=e;S.day=m;}
+  try{const ents=await fetchDays(S.date,S.date);if(t!==dayToken)return;
+    const m={};for(const e of ents)m[e.sid]=e;S.day=m;}
   catch(e){if(t===dayToken){S.day={};toast(errMsg(e),true)}}
   render();
 }
@@ -286,8 +396,15 @@ async function loadRange(){
   if(!isResp())return;
   const t=++rangeToken;S.range=null;render();
   const [a,b]=periodRange();
-  try{const rows=await fetchRecoltes(a,b);if(t!==rangeToken)return;S.range=group(rows)}
+  try{const ents=await fetchDays(a,b);if(t!==rangeToken)return;S.range=ents}
   catch(e){if(t===rangeToken){S.range=[];toast(errMsg(e),true)}}
+  render();
+}
+async function loadMois(){
+  if(!isResp())return;
+  const t=++moisToken;const [a,b]=monthRange(today());
+  try{const ents=await fetchDays(a,b);if(t!==moisToken)return;S.mois=ents}
+  catch(e){if(t===moisToken){S.mois=[];toast(errMsg(e),true)}}
   render();
 }
 async function loadProfils(){
@@ -299,16 +416,15 @@ function scheduleReload(what){
   clearTimeout(reloadT);
   reloadT=setTimeout(async()=>{
     try{if(what==="ref")await loadRef();}catch(e){}
-    loadDay();loadRange();
+    loadDay();loadRange();loadMois();
   },400);
 }
 function subscribe(){
   if(chan)sb.removeChannel(chan);
-  chan=sb.channel("guidal-live")
-    .on("postgres_changes",{event:"*",schema:"public",table:"recoltes"},()=>scheduleReload("rec"))
-    .on("postgres_changes",{event:"*",schema:"public",table:"saisonniers"},()=>scheduleReload("ref"))
-    .on("postgres_changes",{event:"*",schema:"public",table:"legumes"},()=>scheduleReload("ref"))
-    .subscribe();
+  chan=sb.channel("guidal-live");
+  for(const t of ["recoltes","presences"])chan.on("postgres_changes",{event:"*",schema:"public",table:t},()=>scheduleReload("rec"));
+  for(const t of ["saisonniers","legumes","tarifs","smic"])chan.on("postgres_changes",{event:"*",schema:"public",table:t},()=>scheduleReload("ref"));
+  chan.subscribe();
 }
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&S.profil&&S.profil.actif)scheduleReload("ref")});
 
@@ -318,22 +434,22 @@ async function onSession(session){
   S.session=session;
   if(session&&prev===session.user.id&&S.profil)return;
   if(chan){sb.removeChannel(chan);chan=null}
-  S.profil=null;S.day=null;S.range=null;S.profils=[];S.selected=null;S.editCfg=null;
+  S.profil=null;S.day=null;S.range=null;S.mois=null;S.profils=[];S.selected=null;S.editCfg=null;S.tarifs=[];S.smic=[];S.selS=null;
   if(!session){await splashWait();S.booting=false;render();tryStoredCredential();return}
   S.booting=true;render();
   const {data,error}=await sb.from("profils").select("*").eq("id",session.user.id).maybeSingle();
   if(error||!data||!data.actif){await splashWait();S.profil={blocked:true,actif:false,nom:data?data.nom:""};S.booting=false;render();return}
   S.profil=data;
-  const v=load("guidal.view");S.view=(isResp()&&["saisie","supervision","parametres","equipe"].includes(v))?v:"saisie";
+  const v=load("guidal.view");S.view=(isResp()&&["saisie","supervision","saisonniers","produits","equipe"].includes(v))?v:"saisie";
   try{await loadRef();await loadProfils()}catch(e){toast(errMsg(e),true)}
   await splashWait();
   S.booting=false;
-  loadDay();loadRange();subscribe();render();
+  loadDay();loadRange();loadMois();subscribe();render();
 }
 /* Biométrie : le téléphone propose le mot de passe enregistré après Face ID / empreinte (Android : Credential Management ; iPhone : trousseau iCloud via le remplissage automatique) */
 let credTried=false;
 async function tryStoredCredential(){
-  if(credTried||!window.PasswordCredential||!navigator.credentials)return;
+  if(DEMO||credTried||!window.PasswordCredential||!navigator.credentials)return;
   credTried=true;
   try{const c=await navigator.credentials.get({password:true,mediation:"optional"});
     if(c&&c.password&&!S.session){S.form["l-ident"]=c.id;login(c.id,c.password)}}catch(e){}
@@ -345,7 +461,7 @@ async function login(ident,mdp){
   const email=ident.includes("@")?ident:ident+"@"+DOMAIN;
   const {error}=await sb.auth.signInWithPassword({email,password:mdp});
   S.loginBusy=false;
-  if(!error&&window.PasswordCredential&&navigator.credentials){try{await navigator.credentials.store(new PasswordCredential({id:ident,password:mdp,name:ident}))}catch(e){}}
+  if(!error&&!DEMO&&window.PasswordCredential&&navigator.credentials){try{await navigator.credentials.store(new PasswordCredential({id:ident,password:mdp,name:ident}))}catch(e){}}
   if(error){
     S.loginErr=/Invalid login/i.test(error.message)?"Identifiant ou mot de passe incorrect.":
       /not confirmed/i.test(error.message)?"Compte pas encore confirmé. Le responsable doit désactiver « Confirm email » dans Supabase (voir le guide).":errMsg(error);
@@ -358,9 +474,10 @@ const logo=(cls)=>`<svg class="${cls||"logo"}" aria-hidden="true"><use href="#ra
 function render(){
   const root=document.getElementById("root");
   const active=document.activeElement;const fid=active&&active.id;let caret=null;try{caret=active&&active.selectionStart}catch(e){}
-  root.innerHTML=renderScreen();
+  root.innerHTML=(DEMO&&!S.booting?demoBar():"")+renderScreen();
   if(fid){const el=document.getElementById(fid);if(el&&(el.tagName==="INPUT"||el.tagName==="SELECT")){el.focus();try{if(caret!=null)el.setSelectionRange(caret,caret)}catch(e){}}}
 }
+const demoBar=()=>`<div class="demo-bar">MODE DÉMO · données fictives, rien n'est envoyé à la vraie base <button data-act="demo-reset">Réinitialiser la démo</button></div>`;
 function renderScreen(){
   if(!CONFIGURED)return screenMsg("Configuration à terminer","Renseignez l'adresse et la clé de votre projet Supabase dans le fichier <b>config.js</b>, comme indiqué dans le guide d'installation.");
   if(!sb)return screenMsg("Chargement impossible","La bibliothèque de connexion n'a pas pu être chargée. Vérifiez la connexion internet puis rechargez la page.");
@@ -374,8 +491,12 @@ function screenMsg(title,body,withLogout){
     <div style="padding:22px" class="stack"><h3 style="margin:0">${title}</h3><p class="muted">${body}</p>${withLogout?`<button class="btn" data-act="logout">Se déconnecter</button>`:""}</div></div></div>`;
 }
 function screenLogin(){
-  return `<div class="login"><div class="card">
-    <div class="top">${logo("")}<h1>SCEA Guidal</h1><div style="font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;opacity:.8">Terroir &amp; Fraîcheur · Suivi des récoltes</div></div>
+  const top=`<div class="top">${logo("")}<h1>SCEA Guidal</h1><div style="font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;opacity:.8">Terroir &amp; Fraîcheur · Suivi des récoltes</div></div>`;
+  if(DEMO)return `<div class="login"><div class="card">${top}<div class="demo">
+      <h3 style="margin:0">Mode démo</h3><p class="muted">Données fictives, gardées dans ce navigateur. Choisissez un rôle :</p>
+      <button class="btn primary" data-demo="admin">Entrer comme responsable</button>
+      <button class="btn" data-demo="julien">Entrer comme chef d'équipe</button></div></div></div>`;
+  return `<div class="login"><div class="card">${top}
     <form id="form-login" autocomplete="on">
       <label class="f" for="l-ident">Identifiant<input id="l-ident" name="username" data-keep value="${F("l-ident")}" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="julien" required></label>
       <label class="f" for="l-mdp">Mot de passe<input id="l-mdp" name="password" type="password" autocomplete="current-password" required></label>
@@ -387,37 +508,68 @@ function screenLogin(){
 }
 function screenApp(){
   const resp=isResp();const view=resp?S.view:"saisie";
-  const tabs=[["saisie","Saisie"],["supervision","Supervision"],["parametres","Saisonniers et légumes"],["equipe","Équipe"]];
+  const tabs=[["saisie","Saisie"],["supervision","Supervision"],["saisonniers","Saisonniers"],["produits","Produits et tarifs"],["equipe","Équipe"]];
   let body;
   if(view==="saisie")body=viewSaisie();
   else if(view==="supervision")body=viewSupervision();
-  else if(view==="parametres")body=viewParametres();
+  else if(view==="saisonniers")body=viewSaisonniers();
+  else if(view==="produits")body=viewProduits();
   else body=viewEquipe();
+  const lang=view==="saisie"?`<div class="lang" role="group" aria-label="Langue / Língua">${["fr","pt"].map(l=>`<button data-lang="${l}" aria-pressed="${S.lang===l}">${l.toUpperCase()}</button>`).join("")}</div>`:"";
   return `<header class="brand"><div class="wrap">
       ${logo()}
       <div><div class="tag">Terroir &amp; Fraîcheur · depuis 1995</div><h1>SCEA Guidal</h1></div>
-      <div class="userbox"><div><div>${esc(S.profil.nom)}</div><div class="role">${roleLabel(S.profil.role)}</div></div><div class="row" style="gap:8px">${resp?`<button class="btn-out" data-act="share" aria-label="Partager l'application"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:5px"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>Partager</button>`:""}<button class="btn-out" data-act="logout">Déconnexion</button></div></div>
+      <div class="userbox"><div><div>${esc(S.profil.nom)}</div><div class="role">${roleLabel(S.profil.role)}</div></div><div class="row" style="gap:8px">${lang}${resp?`<button class="btn-out" data-act="share" aria-label="Partager l'application"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:5px"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>Partager</button>`:""}<button class="btn-out" data-act="logout">${view==="saisie"?T("logout"):"Déconnexion"}</button></div></div>
     </div></header>
     ${resp?`<nav class="tabs" aria-label="Espaces"><div class="wrap" role="tablist">${tabs.map(([k,l])=>`<button role="tab" data-view="${k}" aria-selected="${view===k}">${l}</button>`).join("")}</div></nav>`:""}
     <main class="wrap">${body}</main>`;
 }
 
 /* --- Saisie --- */
-function summary(q){return S.legumes.filter(l=>Number(q[l.id])>0).map(l=>fmtN(q[l.id])+" "+l.nom.toLowerCase()).join(" · ")}
+function summary(e,lang){
+  const parts=[];if(e.h&&presH(e.h))parts.push(fmtH(presH(e.h)));
+  for(const l of S.legumes){const q=Number(e.q[l.id]);if(q>0){const nm=(lang==="pt"&&l.nom_pt?l.nom_pt:l.nom).toLowerCase();parts.push(fmtN(q)+" "+unitShort(l.mode,q,lang)+" "+nm)}}
+  return parts.join(" · ");
+}
+function meterHtml(){
+  const pres=presH(S.hdraft);let hh=0;
+  for(const l of activeLegumes())if(l.mode==="heure")hh+=Number(S.draft[l.id])||0;
+  if(!pres)return `<div class="meter info">${T("mInfo")}</div>`;
+  if(hh>pres+1e-9)return `<div class="meter over">${T("mOver",fmtH(hh),fmtH(pres))}</div>`;
+  return `<div class="meter">${T("mOk",fmtH(hh),fmtH(pres-hh),fmtH(pres))}</div>`;
+}
+function updMeter(){
+  const m=document.getElementById("meter");if(m)m.innerHTML=meterHtml();
+  const p=document.getElementById("pres-tot");if(p)p.textContent=fmtH(presH(S.hdraft));
+  document.querySelectorAll("[data-q]").forEach(i=>{const r=i.closest(".qrow");if(r)r.classList.toggle("filled",Number(i.value)>0)});
+}
+const timeInput=(k,label)=>`<input type="time" id="h-${k}" data-h="${k}" step="300" value="${esc(S.hdraft[k]||"")}" aria-label="${esc(label)}">`;
 function viewSaisie(){
-  const legs=activeLegumes();const entries=S.day||{};
+  const legs=activeLegumes();const entries=S.day||{};const loc=T("locale");
   const minDate=isResp()?"":addDays(today(),-CHEF_JOURS);
   if(S.selected){
     const p=S.saisonniers.find(x=>x.id===S.selected);
-    const rows=legs.map(l=>`<div class="qrow"><div><div class="lg">${esc(l.nom)}</div><div class="un">${esc(l.unite)}</div></div>
-      <div class="stepper"><button type="button" data-step="-1" data-leg="${l.id}" aria-label="Retirer 1">−</button>
-      <input id="q-${l.id}" data-q="${l.id}" type="number" inputmode="decimal" min="0" step="any" value="${esc(S.draft[l.id]??"")}" placeholder="0" aria-label="${esc(l.nom)} en ${esc(l.unite)}">
-      <button type="button" data-step="1" data-leg="${l.id}" aria-label="Ajouter 1">+</button></div></div>`).join("");
+    const secs=MODES.map(mode=>{
+      const ls=legs.filter(l=>l.mode===mode);if(!ls.length)return "";
+      const st=mode==="heure"?0.5:1;
+      return `<div class="sec"><h4>${T(mode)}</h4><span class="ln"></span>${mode==="heure"?`<span class="chip">${T("step")}</span>`:""}</div>
+        <div class="grid-q">${ls.map(l=>{const v=S.draft[l.id];return `<div class="qrow ${Number(v)>0?"filled":""}"><div><div class="lg">${esc(lname(l))}</div><div class="un">${T("u_"+mode)}</div></div>
+        <div class="stepper"><button type="button" data-step="-${st}" data-leg="${l.id}" aria-label="${T("minus")} ${st}">−</button>
+        <input id="q-${l.id}" data-q="${l.id}" type="number" inputmode="decimal" min="0" step="${mode==="heure"?"0.25":"any"}" value="${esc(v??"")}" placeholder="0" aria-label="${esc(lname(l))} (${T("u_"+mode)})">
+        <button type="button" data-step="${st}" data-leg="${l.id}" aria-label="${T("plus")} ${st}">+</button></div></div>`}).join("")}</div>`;
+    }).join("");
     return `<div class="stack">
-      <div class="row between"><button class="btn ghost" data-act="back">← Retour à la liste</button><span class="muted" style="text-transform:capitalize">${esc(fmtLong(S.date))}</span></div>
-      <div class="row"><h2>${esc(p?p.prenom+" "+p.nom.toUpperCase():"")}</h2>${entries[S.selected]?`<span class="badge ok">Déjà saisi · la validation remplace</span>`:""}</div>
-      ${legs.length?`<div class="grid-q">${rows}</div>`:`<div class="notice">Aucun légume actif. Le responsable les ajoute dans « Saisonniers et légumes ».</div>`}
-      <div class="actionbar"><button class="btn validate" data-act="validate" ${legs.length?"":"disabled"}>Valider la saisie</button></div>
+      <div class="row between"><button class="btn ghost" data-act="back">${T("back")}</button><span class="muted" style="text-transform:capitalize">${esc(fmtLong(S.date,loc))}</span></div>
+      <div class="row"><h2>${esc(p?p.prenom+" "+p.nom.toUpperCase():"")}</h2>${entries[S.selected]?`<span class="badge ok">${T("already")}</span>`:""}</div>
+      <div class="sec"><h4>${T("horaires")}</h4><span class="ln"></span></div>
+      <div class="hours">
+        <div class="hcard"><div class="hd">☀ ${T("matin")}</div><div class="tm">${timeInput("md",T("matin")+" "+T("debut"))}<span>–</span>${timeInput("mf",T("matin")+" "+T("fin"))}</div></div>
+        <div class="hcard"><div class="hd">◐ ${T("am")}</div><div class="tm">${timeInput("ad",T("am")+" "+T("debut"))}<span>–</span>${timeInput("af",T("am")+" "+T("fin"))}</div></div>
+      </div>
+      <div class="total"><span>${T("presence")}</span>${S.lastH?`<button type="button" class="btn sm" data-act="same-h">${T("same")}</button>`:""}<strong id="pres-tot">${fmtH(presH(S.hdraft))}</strong></div>
+      ${legs.length?secs:`<div class="notice">${T("noLegs")}</div>`}
+      <div id="meter">${meterHtml()}</div>
+      <div class="actionbar"><button class="btn validate" data-act="validate">${T("validate")}</button></div>
     </div>`;
   }
   const people=sortedPeople(S.saisonniers.filter(x=>x.actif));
@@ -425,83 +577,193 @@ function viewSaisie(){
   const shown=people.filter(p=>!q||(p.nom+" "+p.prenom).toLowerCase().includes(q)||(p.prenom+" "+p.nom).toLowerCase().includes(q));
   const done=people.filter(p=>entries[p.id]).length;
   const list=shown.map(p=>{const e=entries[p.id];return `<button class="person" data-pick="${p.id}">
-      <span class="nm">${esc(p.nom.toUpperCase())} ${esc(p.prenom)}${e?`<div class="sum">${esc(summary(e.q))}</div>`:""}</span>
-      ${e?`<span class="badge ok">✓ Saisi</span>`:`<span class="badge todo">À saisir</span>`}</button>`}).join("");
+      <span class="nm">${esc(p.nom.toUpperCase())} ${esc(p.prenom)}${e?`<div class="sum">${esc(summary(e,S.lang))}</div>`:""}</span>
+      ${e?`<span class="badge ok">${T("done")}</span>`:`<span class="badge todo">${T("todo")}</span>`}</button>`}).join("");
   return `<div class="stack">
-    <div class="row between"><h2>Saisie du jour</h2><span class="muted">${S.day?`${done} / ${people.length} saisis`:""}</span></div>
+    <div class="row between"><h2>${T("saisieJour")}</h2><span class="muted">${S.day?T("nSaisis",done,people.length):""}</span></div>
     <div class="row" style="align-items:flex-end">
-      <label class="f" style="flex:0 1 200px">Date<input type="date" id="f-date" value="${S.date}" max="${today()}" ${minDate?`min="${minDate}"`:""}></label>
-      <label class="f" style="flex:1 1 220px">Rechercher un saisonnier<input type="search" id="f-search" value="${esc(S.search)}" placeholder="Nom ou prénom"></label>
+      <label class="f" style="flex:0 1 200px">${T("date")}<input type="date" id="f-date" value="${S.date}" max="${today()}" ${minDate?`min="${minDate}"`:""}></label>
+      <label class="f" style="flex:1 1 220px">${T("search")}<input type="search" id="f-search" value="${esc(S.search)}" placeholder="${T("searchPh")}"></label>
     </div>
-    ${!people.length?`<div class="panel"><h3>Aucun saisonnier actif</h3><p class="muted">${isResp()?"Ajoutez les saisonniers dans l'onglet « Saisonniers et légumes ».":"Le responsable doit d'abord ajouter les saisonniers."}</p></div>`:
-      !S.day?`<p class="muted">Chargement de la journée…</p>`:
-      shown.length?`<div class="people">${list}</div>`:`<p class="muted">Aucun saisonnier ne correspond à « ${esc(S.search)} ».</p>`}
+    ${!people.length?`<div class="panel"><h3>${T("noPeople")}</h3><p class="muted">${isResp()?T("noPeopleResp"):T("noPeopleChef")}</p></div>`:
+      !S.day?`<p class="muted">${T("loadingDay")}</p>`:
+      shown.length?`<div class="people">${list}</div>`:`<p class="muted">${esc(T("noMatch",S.search))}</p>`}
   </div>`;
 }
 
-/* --- Supervision --- */
-function aggregate(){
-  const ents=(S.range||[]).filter(e=>Object.values(e.q).some(v=>v>0));
-  const legIds=S.legumes.filter(l=>l.actif||ents.some(e=>Number(e.q[l.id])>0)).map(l=>l.id);
-  const byP={};
-  for(const e of ents){const r=byP[e.sid]||(byP[e.sid]={sid:e.sid,q:{},days:new Set()});r.days.add(e.date);for(const k of legIds)r.q[k]=(r.q[k]||0)+(Number(e.q[k])||0)}
-  const rows=Object.values(byP).sort((a,b)=>personName(a.sid).localeCompare(personName(b.sid),"fr"));
-  const tot={};for(const k of legIds)tot[k]=rows.reduce((s,r)=>s+(r.q[k]||0),0);
-  return {ents,legIds,rows,tot,legs:legIds.map(id=>S.legumes.find(l=>l.id===id))};
+/* --- Supervision et paie --- */
+const ZERO=()=>({tache:0,heure:0,total:0,colis:0,unites:0,hh:0,pres:0,smicMin:0});
+function aggregate(list){
+  const ents=(list||[]).filter(e=>presH(e.h)>0||Object.values(e.q).some(v=>v>0));
+  const by={};const tot=ZERO();const qtot={};let missing=false;
+  for(const e of ents){
+    const v=value(e);e.v=v;if(v.missing)missing=true;
+    const r=by[e.sid]||(by[e.sid]={sid:e.sid,days:new Set(),q:{},...ZERO()});
+    r.days.add(e.date);
+    for(const k in tot){r[k]+=v[k];tot[k]+=v[k]}
+    for(const [k,q] of Object.entries(e.q)){r.q[k]=(r.q[k]||0)+q;qtot[k]=(qtot[k]||0)+q}
+  }
+  const rows=Object.values(by).sort((a,b)=>personName(a.sid).localeCompare(personName(b.sid),"fr"));
+  for(const r of rows)r.alert=r.smicMin>0&&r.total+0.005<r.smicMin;
+  return {ents,rows,tot,qtot,missing,legs:S.legumes.filter(l=>l.actif||qtot[l.id]>0)};
 }
 function viewSupervision(){
   const per=["jour","semaine","mois"].map(p=>`<button data-period="${p}" aria-pressed="${S.period===p}">${p[0].toUpperCase()+p.slice(1)}</button>`).join("");
+  const has=S.range&&S.range.length;
   const head=`<div class="row between"><h2>Tableau de bord</h2>
-      <div class="row"><button class="btn primary" data-act="xlsx" ${S.range&&S.range.length?"":"disabled"}>Exporter vers Excel</button><button class="btn" data-act="csv" ${S.range&&S.range.length?"":"disabled"}>CSV</button></div></div>
+      <div class="row"><button class="btn primary" data-act="xlsx" ${has?"":"disabled"}>Exporter vers Excel</button><button class="btn" data-act="csv" ${has?"":"disabled"}>CSV</button></div></div>
     <div class="row"><div class="seg" role="group" aria-label="Période">${per}</div>
       <div class="periodnav"><button class="btn sm" data-act="prev" aria-label="Période précédente">‹</button>
       <strong>${esc(periodLabel())}</strong>
       <button class="btn sm" data-act="next" aria-label="Période suivante">›</button>
       <button class="btn sm ghost" data-act="now">Aujourd'hui</button></div></div>`;
   if(!S.range)return `<div class="stack">${head}<p class="muted">Chargement de la période…</p></div>`;
-  const A=aggregate();
-  if(!A.ents.length)return `<div class="stack">${head}<div class="panel"><h3>Aucune récolte sur cette période</h3><p class="muted">Les saisies des chefs d'équipe apparaissent ici en temps réel.</p></div></div>`;
-  const tiles=A.legs.map(l=>`<div class="tile"><div class="v">${fmtN(A.tot[l.id])}</div><div class="l">${esc(plur(l.unite,A.tot[l.id]))} · ${esc(l.nom)}</div></div>`).join("")
-    +`<div class="tile"><div class="v">${A.rows.length}</div><div class="l">saisonniers ayant récolté</div></div>`;
-  const th=A.legs.map(l=>`<th class="n">${esc(legLabel(l))}</th>`).join("");
-  const body=A.rows.map(r=>`<tr><td>${esc(personName(r.sid))}</td>${A.legIds.map(k=>`<td class="n ${r.q[k]?"":"zero"}">${fmtN(r.q[k])}</td>`).join("")}<td class="n">${r.days.size}</td></tr>`).join("");
-  const foot=`<tr><td>Total</td>${A.legIds.map(k=>`<td class="n">${fmtN(A.tot[k])}</td>`).join("")}<td></td></tr>`;
-  const det=A.ents.slice().reverse().map(e=>`<tr><td>${esc(fmtDay(e.date))}</td><td>${esc(personName(e.sid))}</td>${A.legIds.map(k=>`<td class="n ${Number(e.q[k])?"":"zero"}">${fmtN(e.q[k])}</td>`).join("")}<td>${esc(parName(e.par))}${e.corr?` <span class="muted">· corrigé par ${esc(parName(e.corr))}</span>`:""}</td><td><button class="btn sm" data-edit="${e.date}|${e.sid}">Corriger</button></td></tr>`).join("");
+  const A=aggregate(S.range);
+  if(!A.ents.length)return `<div class="stack">${head}<div class="panel"><h3>Aucune saisie sur cette période</h3><p class="muted">Les saisies des chefs d'équipe apparaissent ici en temps réel.</p></div></div>`;
+  const notes=[];
+  if(A.missing)notes.push(`<div class="notice warn">Certains produits saisis n'ont pas de prix sur cette période : les montants sont incomplets. <button class="btn sm ghost" data-view="produits">Compléter les tarifs →</button></div>`);
+  if(!S.smic.length)notes.push(`<div class="notice">Renseignez le SMIC horaire dans « Produits et tarifs » pour activer l'alerte SMIC.</div>`);
+  const alerts=A.rows.filter(r=>r.alert).length;
+  const tiles=`<div class="tile"><div class="v">${fmtN(A.tot.pres)}</div><div class="l">heures de présence</div></div>
+    <div class="tile"><div class="v">${fmtN(A.tot.colis)}</div><div class="l">colis</div></div>
+    ${A.tot.unites?`<div class="tile"><div class="v">${fmtN(A.tot.unites)}</div><div class="l">unités</div></div>`:""}
+    <div class="tile"><div class="v">${fmtN(A.tot.hh)}</div><div class="l">heures à l'heure</div></div>
+    <div class="tile"><div class="v">${A.rows.length}</div><div class="l">saisonniers</div></div>
+    <div class="tile money"><div class="v">${fmtE(A.tot.total)}</div><div class="l">montant total${alerts?` · ${alerts} sous le SMIC`:""}</div></div>`;
+  const det=A.ents.slice().reverse().map(e=>{const h=e.h||{};return `<tr><td>${esc(fmtDay(e.date))}</td><td>${esc(personName(e.sid))}</td>
+    <td>${halfDay(h.md,h.mf)}</td><td>${halfDay(h.ad,h.af)}</td><td class="n">${e.v.pres?fmtH(e.v.pres):"—"}</td>
+    <td style="white-space:normal;min-width:200px">${esc(summary({q:e.q,h:null},"fr"))||`<span class="muted">—</span>`}</td>
+    <td class="n eur">${fmtE(e.v.total)}${e.v.missing?` <span class="badge warn" title="Prix manquant">?</span>`:""}</td>
+    <td>${esc(parName(e.par))}${e.corr?` <span class="muted">· corrigé par ${esc(parName(e.corr))}</span>`:""}</td>
+    <td><button class="btn sm" data-edit="${e.date}|${e.sid}">Corriger</button></td></tr>`}).join("");
+  const paie=A.rows.map(r=>`<tr><td>${esc(personName(r.sid))}</td><td class="n">${r.days.size}</td><td class="n">${fmtN(r.pres)}</td>
+    <td class="n ${r.colis?"":"zero"}">${fmtN(r.colis)}</td><td class="n ${r.unites?"":"zero"}">${fmtN(r.unites)}</td><td class="n ${r.hh?"":"zero"}">${fmtN(r.hh)}</td>
+    <td class="n">${fmtE(r.tache)}</td><td class="n">${fmtE(r.heure)}</td><td class="n eur">${fmtE(r.total)}</td>
+    <td>${r.alert?`<span class="badge warn" title="Minimum SMIC : ${fmtE(r.smicMin)} pour ${fmtN(r.pres)} h de présence">⚠ sous le SMIC (${fmtE(r.smicMin)})</span>`:""}</td></tr>`).join("");
+  const T0=A.tot;
+  const foot=`<tr><td>Total</td><td></td><td class="n">${fmtN(T0.pres)}</td><td class="n">${fmtN(T0.colis)}</td><td class="n">${fmtN(T0.unites)}</td><td class="n">${fmtN(T0.hh)}</td><td class="n">${fmtE(T0.tache)}</td><td class="n">${fmtE(T0.heure)}</td><td class="n">${fmtE(T0.total)}</td><td></td></tr>`;
+  const th=A.legs.map(l=>`<th class="n">${esc(l.nom)} <span style="text-transform:none">(${MODE_UNIT[l.mode]==="heure"?"h":esc(MODE_UNIT[l.mode])})</span></th>`).join("");
+  const qrows=A.rows.map(r=>`<tr><td>${esc(personName(r.sid))}</td>${A.legs.map(l=>`<td class="n ${r.q[l.id]?"":"zero"}">${fmtN(r.q[l.id])}</td>`).join("")}</tr>`).join("");
+  const qfoot=`<tr><td>Total</td>${A.legs.map(l=>`<td class="n">${fmtN(A.qtot[l.id])}</td>`).join("")}</tr>`;
   return `<div class="stack">${head}
+    ${notes.join("")}
     <div class="tiles">${tiles}</div>
-    <div><h3>Saisies journalières</h3><div class="tscroll"><table><thead><tr><th>Date</th><th>Saisonnier</th>${th}<th>Saisi par</th><th></th></tr></thead><tbody>${det}</tbody></table></div></div>
-    <div><h3>Cumuls par saisonnier</h3><div class="tscroll"><table><thead><tr><th>Saisonnier</th>${th}<th class="n">Jours</th></tr></thead><tbody>${body}</tbody><tfoot>${foot}</tfoot></table></div></div>
+    <div><h3>Saisies journalières</h3><div class="tscroll"><table><thead><tr><th>Date</th><th>Saisonnier</th><th>Matin</th><th>Après-midi</th><th class="n">Présence</th><th>Réalisé</th><th class="n">Montant</th><th>Saisi par</th><th></th></tr></thead><tbody>${det}</tbody></table></div></div>
+    <div><h3>Paie par saisonnier</h3><div class="tscroll"><table><thead><tr><th>Saisonnier</th><th class="n">Jours</th><th class="n">Présence (h)</th><th class="n">Colis</th><th class="n">Unités</th><th class="n">Heures à l'heure</th><th class="n">À la tâche</th><th class="n">À l'heure</th><th class="n">Total</th><th></th></tr></thead><tbody>${paie}</tbody><tfoot>${foot}</tfoot></table></div></div>
+    <details><summary>Quantités par produit</summary><div class="tscroll"><table><thead><tr><th>Saisonnier</th>${th}</tr></thead><tbody>${qrows}</tbody><tfoot>${qfoot}</tfoot></table></div></details>
   </div>`;
 }
 
-/* --- Saisonniers et légumes --- */
+/* --- Saisonniers --- */
 const F=k=>esc(S.form[k]??"");
-function viewParametres(){
-  const E=S.editCfg;
-  const ppl=sortedPeople(S.saisonniers).map(p=>(E&&E.kind==="s"&&E.id===p.id)?
-     `<form class="it edit" id="form-es" data-id="${p.id}"><input id="es-nom" data-keep aria-label="Nom" value="${F("es-nom")}" required><input id="es-prenom" data-keep aria-label="Prénom" value="${F("es-prenom")}" required>
-      <button class="btn sm primary">Enregistrer</button><button type="button" class="btn sm" data-act="cfg-cancel">Annuler</button></form>`:
-     `<div class="it"><span class="nm">${esc(p.nom.toUpperCase())} ${esc(p.prenom)}</span>
-      ${p.actif?`<span class="badge ok">Actif</span>`:`<span class="badge off">Parti</span>`}
-      <button class="btn sm" data-edit-s="${p.id}">Modifier</button><button class="btn sm" data-toggle-s="${p.id}">${p.actif?"Marquer parti":"Réactiver"}</button></div>`).join("");
-  const legs=S.legumes.map(l=>(E&&E.kind==="l"&&E.id===l.id)?
-     `<form class="it edit" id="form-el" data-id="${l.id}"><input id="el-nom" data-keep aria-label="Légume" value="${F("el-nom")}" required><select id="el-unite" data-keep aria-label="Unité">${UNITES.map(u=>`<option ${S.form["el-unite"]===u?"selected":""}>${u}</option>`).join("")}</select>
-      <button class="btn sm primary">Enregistrer</button><button type="button" class="btn sm" data-act="cfg-cancel">Annuler</button></form>`:
-     `<div class="it"><span class="nm">${esc(l.nom)} <span class="muted">· ${esc(l.unite)}</span></span>
-      ${l.actif?`<span class="badge ok">Actif</span>`:`<span class="badge off">Masqué</span>`}
-      <button class="btn sm" data-edit-l="${l.id}">Modifier</button><button class="btn sm" data-toggle-l="${l.id}">${l.actif?"Masquer":"Réactiver"}</button></div>`).join("");
+function viewSaisonniers(){
+  const A=S.mois?aggregate(S.mois):null;const byS={};if(A)for(const r of A.rows)byS[r.sid]=r;
+  const all=sortedPeople(S.saisonniers);
+  const nA=all.filter(p=>p.actif).length,nP=all.length-nA;
+  const q=S.sSearch.trim().toLowerCase();
+  const list=all.filter(p=>(S.sFilter==="tous"||(S.sFilter==="actifs")===p.actif)&&(!q||(p.nom+" "+p.prenom).toLowerCase().includes(q)||(p.prenom+" "+p.nom).toLowerCase().includes(q)));
+  const seg=[["actifs","Actifs ("+nA+")"],["partis","Partis ("+nP+")"],["tous","Tous"]].map(([k,l])=>`<button data-sfilter="${k}" aria-pressed="${S.sFilter===k}">${l}</button>`).join("");
+  const rows=list.map(p=>{const r=byS[p.id];return `<tr data-sel-s="${p.id}" class="${S.selS===p.id?"sel":""}"><td><b>${esc(p.nom.toUpperCase())}</b> ${esc(p.prenom)}</td>
+    <td class="n">${r?r.days.size:'<span class="zero">0</span>'}</td><td class="n">${r?fmtN(r.pres):'<span class="zero">0</span>'}</td><td class="n">${r?fmtN(r.colis):'<span class="zero">0</span>'}</td>
+    <td class="n eur">${r?fmtE(r.total):'<span class="zero">—</span>'}</td><td>${p.actif?`<span class="badge ok">Actif</span>`:`<span class="badge off">Parti</span>`}${r&&r.alert?` <span class="badge warn">⚠ SMIC</span>`:""}</td></tr>`}).join("");
+  const sel=S.saisonniers.find(x=>x.id===S.selS);
+  let fiche=`<div class="panel"><p class="muted">Choisissez un saisonnier dans la liste pour voir sa fiche.</p></div>`;
+  if(sel){const r=byS[sel.id];
+    fiche=`<div class="panel stack">
+      <div class="row between"><h3 style="margin:0">${esc(sel.prenom)} ${esc(sel.nom.toUpperCase())}</h3>${sel.actif?`<span class="badge ok">Actif</span>`:`<span class="badge off">Parti</span>`}</div>
+      <form id="form-es" data-id="${sel.id}" class="addform">
+        <label class="f">Nom<input id="es-nom" data-keep value="${F("es-nom")}" required></label>
+        <label class="f">Prénom<input id="es-prenom" data-keep value="${F("es-prenom")}" required></label>
+        <button class="btn primary">Enregistrer</button>
+      </form>
+      <div class="row"><button class="btn sm" data-toggle-s="${sel.id}">${sel.actif?"Marquer parti":"Réactiver"}</button><span class="muted" style="font-size:.8rem">Un saisonnier parti n'apparaît plus dans la saisie. Son historique est conservé.</span></div>
+      <div style="border-top:1px solid var(--line);padding-top:14px" class="stack">
+        <h3 style="margin:0;text-transform:capitalize">${esc(monthLabel(today()))}</h3>
+        ${r?`<div class="tiles" style="grid-template-columns:repeat(auto-fill,minmax(120px,1fr))">
+          <div class="tile"><div class="v">${r.days.size}</div><div class="l">jours</div></div>
+          <div class="tile"><div class="v">${fmtN(r.pres)}</div><div class="l">heures de présence</div></div>
+          <div class="tile"><div class="v">${fmtN(r.colis)}</div><div class="l">colis</div></div>
+          ${r.unites?`<div class="tile"><div class="v">${fmtN(r.unites)}</div><div class="l">unités</div></div>`:""}
+          <div class="tile"><div class="v">${fmtN(r.hh)}</div><div class="l">heures à l'heure</div></div>
+          <div class="tile money"><div class="v">${fmtE(r.total)}</div><div class="l">montant du mois</div></div></div>
+          ${r.alert?`<div class="notice warn">Sous le SMIC : ${fmtE(r.total)} gagnés pour ${fmtN(r.pres)} h de présence (minimum ${fmtE(r.smicMin)}).</div>`:""}`
+        :`<p class="muted">Aucune saisie ce mois-ci.</p>`}
+      </div></div>`;
+  }
   return `<div class="stack">
-    <h2>Saisonniers et légumes</h2>
-    <div class="cols">
-      <section class="panel stack"><h3>Saisonniers</h3>
-        <form id="form-s" class="addform"><label class="f">Nom<input id="s-nom" data-keep value="${F("s-nom")}" required></label><label class="f">Prénom<input id="s-prenom" data-keep value="${F("s-prenom")}" required></label><button class="btn primary">Ajouter</button></form>
-        <div class="listcfg">${ppl||`<p class="muted">Aucun saisonnier. Ajoutez le premier avec le formulaire ci-dessus.</p>`}</div>
+    <h2>Saisonniers</h2>
+    <section class="panel"><form id="form-s" class="addform"><label class="f">Nom<input id="s-nom" data-keep value="${F("s-nom")}" required></label><label class="f">Prénom<input id="s-prenom" data-keep value="${F("s-prenom")}" required></label><button class="btn primary">+ Ajouter un saisonnier</button></form></section>
+    <div class="split">
+      <div class="stack">
+        <div class="row"><div class="seg" role="group" aria-label="Filtre">${seg}</div><input type="search" id="f-ssearch" value="${esc(S.sSearch)}" placeholder="Rechercher…" style="flex:1;min-width:150px;width:auto"></div>
+        ${all.length?`<div class="tscroll"><table><thead><tr><th>Saisonnier</th><th class="n">Jours</th><th class="n">Heures</th><th class="n">Colis</th><th class="n">Montant</th><th>Statut</th></tr></thead><tbody>${rows||`<tr><td colspan="6" class="muted">Aucun saisonnier dans cette liste.</td></tr>`}</tbody></table></div>
+        <p class="muted" style="font-size:.8rem">Cumuls de ${esc(monthLabel(today()))}${S.mois?"":" (chargement…)"}. Cliquez sur une ligne pour ouvrir la fiche.</p>`
+        :`<p class="muted">Aucun saisonnier. Ajoutez le premier avec le formulaire ci-dessus.</p>`}
+      </div>
+      ${fiche}
+    </div>
+  </div>`;
+}
+
+/* --- Produits et tarifs --- */
+function priceCell(l){
+  const p=priceAt(l.id,today());const fut=tarifsOf(l.id).find(t=>t.depuis>today());
+  const u=l.mode==="heure"?"h":MODE_UNIT[l.mode];
+  return (p==null?`<span class="badge warn">Prix à définir</span>`:`<span class="eur">${fmtE(p)}</span> <span class="muted">/ ${u}</span>`)
+    +(fut?`<div class="muted" style="font-size:.75rem">${fmtE(fut.prix)} à partir du ${fmtDate(fut.depuis)}</div>`:"");
+}
+function viewProduits(){
+  const E=S.editCfg;
+  const modeSel=(id,val)=>`<select id="${id}" data-keep>${MODES.map(m=>`<option value="${m}" ${val===m?"selected":""}>${MODE_LABEL[m]}</option>`).join("")}</select>`;
+  const groups=MODES.map(mode=>{
+    const ls=S.legumes.filter(l=>l.mode===mode);
+    const head=`<tr><td colspan="6" class="grp">${MODE_LABEL[mode]} · ${ls.length} ${mode==="heure"?(ls.length>1?"tâches":"tâche"):(ls.length>1?"produits":"produit")}</td></tr>`;
+    return head+ls.map((l,i)=>{
+      if(E&&E.kind==="l"&&E.id===l.id){
+        const hist=tarifsOf(l.id).map(t=>`${fmtE(t.prix)} ${t.depuis===PRIX_ORIGINE?"(prix de départ)":"depuis le "+fmtDate(t.depuis)}`).join(" · ");
+        return `<tr><td colspan="6"><form id="form-el" data-id="${l.id}" class="inl">
+          <label class="f">Nom (français)<input id="el-nom" data-keep value="${F("el-nom")}" required></label>
+          <label class="f">Nom (portugais)<input id="el-nompt" data-keep value="${F("el-nompt")}"></label>
+          <label class="f">Mode de paie${modeSel("el-mode",S.form["el-mode"])}</label>
+          <label class="f">Nouveau prix (€)<input id="el-prix" data-keep type="number" inputmode="decimal" min="0" step="0.001" value="${F("el-prix")}" placeholder="inchangé"></label>
+          <label class="f">À partir du<input id="el-depuis" data-keep type="date" value="${F("el-depuis")}"></label>
+          <div class="row" style="gap:8px"><button class="btn sm primary">Enregistrer</button><button type="button" class="btn sm" data-act="cfg-cancel">Annuler</button></div>
+          <p class="muted" style="font-size:.8rem;grid-column:1/-1">${hist?"Historique des prix : "+esc(hist)+". ":"Aucun prix pour l'instant : le premier prix s'appliquera aussi aux saisies passées. "}Un nouveau prix ne change pas les jours avant sa date.</p>
+        </form></td></tr>`;
+      }
+      return `<tr><td style="width:84px"><button class="btn ico" data-move="${l.id}|-1" ${i?"":"disabled"} aria-label="Monter">↑</button> <button class="btn ico" data-move="${l.id}|1" ${i<ls.length-1?"":"disabled"} aria-label="Descendre">↓</button></td>
+        <td><b>${esc(l.nom)}</b></td><td class="muted">${esc(l.nom_pt||"—")}</td><td>${priceCell(l)}</td>
+        <td>${l.actif?`<span class="badge ok">Actif</span>`:`<span class="badge off">Masqué</span>`}</td>
+        <td><button class="btn sm" data-edit-l="${l.id}">Modifier</button> <button class="btn sm" data-toggle-l="${l.id}">${l.actif?"Masquer":"Réactiver"}</button></td></tr>`;
+    }).join("");
+  }).join("");
+  const sm=smicAt(today());const smFut=S.smic.filter(x=>x.depuis>today()).sort((a,b)=>a.depuis.localeCompare(b.depuis))[0];
+  const smHist=S.smic.slice().sort((a,b)=>b.depuis.localeCompare(a.depuis)).map(x=>fmtE(x.taux)+" depuis le "+fmtDate(x.depuis)).join(" · ");
+  return `<div class="stack">
+    <h2>Produits et tarifs</h2>
+    <p class="muted">Les prix ne sont visibles que par les responsables. Le chef d'équipe ne voit que les noms des produits.</p>
+    <div class="split" style="grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)">
+      <section class="panel stack"><h3 style="margin:0">Ajouter un produit ou une tâche</h3>
+        <form id="form-l" class="addform">
+          <label class="f">Nom (français)<input id="l-nom" data-keep value="${F("l-nom")}" placeholder="Poireaux" required></label>
+          <label class="f">Nom (portugais)<input id="l-nompt" data-keep value="${F("l-nompt")}" placeholder="Alho-francês"></label>
+          <label class="f">Mode de paie${modeSel("l-mode",S.form["l-mode"]||"colis")}</label>
+          <label class="f">Prix (€)<input id="l-prix" data-keep type="number" inputmode="decimal" min="0" step="0.001" value="${F("l-prix")}" placeholder="0,00"></label>
+          <button class="btn primary">Ajouter</button>
+        </form>
       </section>
-      <section class="panel stack"><h3>Légumes</h3>
-        <form id="form-l" class="addform"><label class="f">Légume<input id="l-nom" data-keep value="${F("l-nom")}" placeholder="Poireaux" required></label><label class="f">Unité<select id="l-unite" data-keep>${UNITES.map(u=>`<option ${S.form["l-unite"]===u?"selected":""}>${u}</option>`).join("")}</select></label><button class="btn primary">Ajouter</button></form>
-        <div class="listcfg">${legs||`<p class="muted">Aucun légume.</p>`}</div>
+      <section class="panel stack"><h3 style="margin:0">SMIC horaire brut</h3>
+        <p>${sm!=null?`Actuel : <span class="eur">${fmtE(sm)}</span> / h`:`<span class="badge warn">Non renseigné</span>`}${smFut?` <span class="muted">· ${fmtE(smFut.taux)} à partir du ${fmtDate(smFut.depuis)}</span>`:""}</p>
+        <form id="form-smic" class="addform">
+          <label class="f">Taux (€ / h)<input id="sm-taux" data-keep type="number" inputmode="decimal" min="0" step="0.001" value="${F("sm-taux")}" required></label>
+          <label class="f">À partir du<input id="sm-depuis" data-keep type="date" value="${F("sm-depuis")||today().slice(0,8)+"01"}" required></label>
+          <button class="btn">Enregistrer</button>
+        </form>
+        <p class="muted" style="font-size:.8rem">${smHist?"Historique : "+esc(smHist)+". ":""}Sert à l'alerte « sous le SMIC » : le total gagné est comparé aux heures de présence × SMIC.</p>
       </section>
     </div>
+    <div class="tscroll"><table><thead><tr><th>Ordre</th><th>Produit</th><th>Portugais</th><th>Prix</th><th>Statut</th><th></th></tr></thead><tbody>${groups}</tbody></table></div>
+    <p class="muted" style="font-size:.85rem">Un produit masqué disparaît de l'écran du chef, mais ses saisies passées restent dans les cumuls et la paie.</p>
   </div>`;
 }
 
@@ -541,11 +803,18 @@ function viewEquipe(){
 /* ---------- fenêtre de correction ---------- */
 function openEdit(date,sid){
   const e=(S.range||[]).find(x=>x.date===date&&x.sid===sid);if(!e)return;
+  const h=e.h||{};
   const legs=S.legumes.filter(l=>l.actif||Number(e.q[l.id])>0);
+  const tin=(k,lab)=>`<input type="time" step="300" data-eh="${k}" value="${esc(h[k]||"")}" aria-label="${lab}">`;
   const d=document.getElementById("dlg");
   d.innerHTML=`<div class="dh"><h3>Corriger la saisie</h3><div style="font-size:.85rem;opacity:.85">${esc(personName(sid))} · ${esc(fmtLong(date))}</div></div>
    <form class="db" id="form-edit">
-    ${legs.map(l=>`<div class="qrow"><div><div class="lg">${esc(l.nom)}</div><div class="un">${esc(l.unite)}</div></div><input data-eq="${l.id}" type="number" inputmode="decimal" min="0" step="any" value="${Number(e.q[l.id])||""}" placeholder="0" style="width:110px;text-align:right" aria-label="${esc(l.nom)}"></div>`).join("")}
+    <div class="hours">
+      <div class="hcard"><div class="hd">☀ Matin</div><div class="tm">${tin("md","Matin début")}<span>–</span>${tin("mf","Matin fin")}</div></div>
+      <div class="hcard"><div class="hd">◐ Après-midi</div><div class="tm">${tin("ad","Après-midi début")}<span>–</span>${tin("af","Après-midi fin")}</div></div>
+    </div>
+    ${MODES.map(m=>{const ls=legs.filter(l=>l.mode===m);if(!ls.length)return "";
+      return `<div class="sec"><h4>${MODE_LABEL[m]}</h4><span class="ln"></span></div>`+ls.map(l=>`<div class="qrow"><div><div class="lg">${esc(l.nom)}</div><div class="un">${m==="heure"?"heures":esc(MODE_UNIT[m])}</div></div><input data-eq="${l.id}" type="number" inputmode="decimal" min="0" step="any" value="${Number(e.q[l.id])||""}" placeholder="0" style="width:110px;text-align:right" aria-label="${esc(l.nom)}"></div>`).join("")}).join("")}
     <div class="row between">
       <button type="button" class="btn danger" id="e-del">Supprimer</button>
       <div class="row"><button type="button" class="btn" id="e-cancel">Annuler</button><button class="btn validate">Enregistrer</button></div>
@@ -555,18 +824,30 @@ function openEdit(date,sid){
   const del=d.querySelector("#e-del");
   del.onclick=async()=>{
     if(!del.dataset.confirm){del.dataset.confirm="1";del.textContent="Confirmer la suppression";return}
-    const {error}=await sb.from("recoltes").delete().eq("date",date).eq("saisonnier_id",Number(sid));
-    if(error)return toast(errMsg(error),true);
-    d.close();toast("Saisie supprimée");loadDay();loadRange();
+    const [a,b]=await Promise.all([sb.from("recoltes").delete().eq("date",date).eq("saisonnier_id",Number(sid)),sb.from("presences").delete().eq("date",date).eq("saisonnier_id",Number(sid))]);
+    const error=a.error||b.error;if(error)return toast(errMsg(error),true);
+    d.close();toast("Saisie supprimée");loadDay();loadRange();loadMois();
   };
   d.querySelector("#form-edit").onsubmit=async ev=>{
-    ev.preventDefault();const q={};
+    ev.preventDefault();const q={},hh={};
     d.querySelectorAll("[data-eq]").forEach(i=>{q[i.dataset.eq]=Math.max(0,Number(i.value)||0)});
-    const {error}=await sb.rpc("enregistrer_saisie",{p_date:date,p_saisonnier:Number(sid),p_quantites:q});
+    d.querySelectorAll("[data-eh]").forEach(i=>{hh[i.dataset.eh]=i.value});
+    const chk=checkHours(hh,q,"fr");if(chk)return toast(chk,true);
+    const {error}=await sb.rpc("enregistrer_journee",{p_date:date,p_saisonnier:Number(sid),p_quantites:q,p_horaires:horairesDb(hh)});
     if(error)return toast(errMsg(error),true);
-    d.close();toast("Saisie corrigée");loadDay();loadRange();
+    d.close();toast("Saisie corrigée");loadDay();loadRange();loadMois();
   };
 }
+/* contrôle des horaires (renvoie un message d'erreur ou rien) */
+function checkHours(h,q,lang){
+  const t=k=>I18N[lang][k];
+  for(const [a,b] of [["md","mf"],["ad","af"]]){if(!!h[a]!==!!h[b])return t("errPair");if(h[a]&&tmin(h[b])<=tmin(h[a]))return t("errOrder")}
+  let hh=0;for(const [k,v] of Object.entries(q)){const l=legById(k);if(l&&l.mode==="heure")hh+=v}
+  const pres=presH(h);
+  if(pres&&hh>pres+1e-9)return t("errOver");
+  return "";
+}
+const horairesDb=h=>({matin_debut:h.md||null,matin_fin:h.mf||null,am_debut:h.ad||null,am_fin:h.af||null});
 
 /* ---------- partage de l'application ---------- */
 const appUrl=()=>location.origin+location.pathname;
@@ -598,15 +879,27 @@ function openShare(){
 }
 
 /* ---------- export ---------- */
+const r2=n=>Math.round((n||0)*100)/100;
 function exportRows(){
-  const A=aggregate();const [a,b]=periodRange();
-  const recap=[["Nom","Prénom",...A.legs.map(legLabel),"Jours travaillés"]];
-  for(const r of A.rows){const p=S.saisonniers.find(x=>x.id===r.sid)||{nom:"Saisonnier retiré",prenom:""};recap.push([p.nom.toUpperCase(),p.prenom,...A.legIds.map(k=>r.q[k]||0),r.days.size])}
-  recap.push(["TOTAL","",...A.legIds.map(k=>A.tot[k]),""]);
-  const detail=[["Date","Nom","Prénom","Légume","Unité","Quantité","Saisi par","Corrigé par"]];
-  for(const e of A.ents){const p=S.saisonniers.find(x=>x.id===e.sid)||{nom:"Saisonnier retiré",prenom:""};
-    for(const l of A.legs){const v=Number(e.q[l.id])||0;if(v>0)detail.push([e.date,p.nom.toUpperCase(),p.prenom,l.nom,l.unite,v,parName(e.par),e.corr?parName(e.corr):""])}}
-  return {recap,detail,tag:S.period==="mois"?a.slice(0,7):a+"_"+b,a,b};
+  const A=aggregate(S.range);const [a,b]=periodRange();
+  const who=sid=>S.saisonniers.find(x=>x.id===sid)||{nom:"Saisonnier retiré",prenom:""};
+  const paie=[["Nom","Prénom","Jours travaillés","Heures de présence","Colis","Unités","Heures à l'heure","Montant à la tâche (€)","Montant à l'heure (€)","Total (€)","Minimum SMIC (€)","Alerte"]];
+  for(const r of A.rows){const p=who(r.sid);paie.push([p.nom.toUpperCase(),p.prenom,r.days.size,r2(r.pres),r.colis,r.unites,r2(r.hh),r2(r.tache),r2(r.heure),r2(r.total),r2(r.smicMin),r.alert?"Sous le SMIC":""])}
+  paie.push(["TOTAL","","",r2(A.tot.pres),A.tot.colis,A.tot.unites,r2(A.tot.hh),r2(A.tot.tache),r2(A.tot.heure),r2(A.tot.total),r2(A.tot.smicMin),""]);
+  const detail=[["Date","Nom","Prénom","Matin début","Matin fin","Après-midi début","Après-midi fin","Présence (h)","Produit","Mode de paie","Quantité","Prix unitaire (€)","Montant (€)","Saisi par","Corrigé par"]];
+  for(const e of A.ents){const p=who(e.sid);const h=e.h||{};
+    const base=[e.date,p.nom.toUpperCase(),p.prenom,h.md||"",h.mf||"",h.ad||"",h.af||"",r2(e.v.pres)];
+    const end=[parName(e.par),e.corr?parName(e.corr):""];
+    const ls=S.legumes.filter(l=>Number(e.q[l.id])>0);
+    if(!ls.length)detail.push([...base,"","","","","",...end]);
+    ls.forEach((l,i)=>{const q=Number(e.q[l.id]);const pr=priceAt(l.id,e.date);
+      detail.push([...(i?[e.date,p.nom.toUpperCase(),p.prenom,"","","","",""]:base),l.nom,MODE_LABEL[l.mode],q,pr==null?"":pr,pr==null?"":r2(pr*q),...end])});
+  }
+  const tarifs=[["Produit","Portugais","Mode de paie","Prix (€)","À partir du"]];
+  for(const l of S.legumes)for(const t of tarifsOf(l.id).slice().reverse())tarifs.push([l.nom,l.nom_pt||"",MODE_LABEL[l.mode],t.prix,t.depuis===PRIX_ORIGINE?"":t.depuis]);
+  tarifs.push([]);tarifs.push(["SMIC horaire brut","","",""," "]);
+  for(const s of S.smic.slice().sort((x,y)=>x.depuis.localeCompare(y.depuis)))tarifs.push(["SMIC","","",s.taux,s.depuis]);
+  return {paie,detail,tarifs,tag:S.period==="mois"?a.slice(0,7):a+"_"+b,a,b};
 }
 function saveBlob(name,blob){
   const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
@@ -615,19 +908,21 @@ function saveBlob(name,blob){
 function doXlsx(){
   if(!window.XLSX)return toast("Module Excel non chargé. Utilisez l'export CSV.",true);
   const R=exportRows();const wb=XLSX.utils.book_new();
-  const head=[["SCEA Guidal · Récapitulatif des récoltes"],["Période : "+periodLabel()+" ("+R.a+" au "+R.b+")"],[]];
-  const ws1=XLSX.utils.aoa_to_sheet(head.concat(R.recap));
-  ws1["!cols"]=[{wch:20},{wch:16},...R.recap[0].slice(2).map(()=>({wch:18}))];
-  XLSX.utils.book_append_sheet(wb,ws1,"Récap paie");
-  const ws2=XLSX.utils.aoa_to_sheet(R.detail);ws2["!cols"]=[{wch:12},{wch:18},{wch:14},{wch:18},{wch:9},{wch:10},{wch:18},{wch:18}];
-  XLSX.utils.book_append_sheet(wb,ws2,"Détail journalier");
+  const head=[["SCEA Guidal · Paie des saisonniers"],["Période : "+periodLabel()+" ("+R.a+" au "+R.b+")"],[]];
+  const ws1=XLSX.utils.aoa_to_sheet(head.concat(R.paie));
+  ws1["!cols"]=[{wch:20},{wch:16},...R.paie[0].slice(2).map(()=>({wch:17}))];
+  XLSX.utils.book_append_sheet(wb,ws1,"Paie");
+  const ws2=XLSX.utils.aoa_to_sheet(R.detail);ws2["!cols"]=[{wch:12},{wch:18},{wch:14},{wch:11},{wch:11},{wch:11},{wch:11},{wch:11},{wch:18},{wch:12},{wch:10},{wch:12},{wch:12},{wch:18},{wch:18}];
+  XLSX.utils.book_append_sheet(wb,ws2,"Détail");
+  const ws3=XLSX.utils.aoa_to_sheet(R.tarifs);ws3["!cols"]=[{wch:20},{wch:18},{wch:14},{wch:10},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws3,"Tarifs");
   const buf=XLSX.write(wb,{bookType:"xlsx",type:"array"});
-  saveBlob("Recoltes_SCEA-Guidal_"+R.tag+".xlsx",new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));
+  saveBlob("Paie_SCEA-Guidal_"+R.tag+".xlsx",new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));
 }
 function doCsv(){
   const R=exportRows();
-  const csv=R.recap.map(r=>r.map(v=>{const s=typeof v==="number"?String(v).replace(".",","):String(v);return /[;"\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s}).join(";")).join("\r\n");
-  saveBlob("Recoltes_SCEA-Guidal_"+R.tag+".csv",new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8"}));
+  const csv=R.paie.map(r=>r.map(v=>{const s=typeof v==="number"?String(v).replace(".",","):String(v);return /[;"\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s}).join(";")).join("\r\n");
+  saveBlob("Paie_SCEA-Guidal_"+R.tag+".csv",new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8"}));
 }
 
 /* ---------- actions ---------- */
@@ -640,43 +935,72 @@ async function createAccount(){
   if(S.profils.some(p=>p.identifiant===ident))return toast("Cet identifiant existe déjà.",true);
   S.form._busy=true;render();
   try{
-    let r=await sb.from("invitations").upsert({identifiant:ident,nom,role});
-    if(r.error)throw r.error;
-    const tmp=window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false,storageKey:"guidal-creation"}});
-    r=await tmp.auth.signUp({email:ident+"@"+DOMAIN,password:mdp});
-    if(r.error){await sb.from("invitations").delete().eq("identifiant",ident);throw r.error}
+    if(DEMO){const r=await sb.from("profils").insert({identifiant:ident,nom,role});if(r.error)throw r.error}
+    else{
+      let r=await sb.from("invitations").upsert({identifiant:ident,nom,role});
+      if(r.error)throw r.error;
+      const tmp=window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false,storageKey:"guidal-creation"}});
+      r=await tmp.auth.signUp({email:ident+"@"+DOMAIN,password:mdp});
+      if(r.error){await sb.from("invitations").delete().eq("identifiant",ident);throw r.error}
+    }
     await loadProfils();
     if(S.profils.some(p=>p.identifiant===ident)){S.form["u-nom"]=S.form["u-ident"]=S.form["u-mdp"]="";toast("Compte créé : "+ident)}
     else toast("Compte enregistré mais pas encore actif. Vérifiez le réglage « Confirm email » dans Supabase (voir le guide).",true);
   }catch(e){toast(/already registered/i.test(e.message||"")?"Cet identifiant existe déjà.":errMsg(e),true)}
   S.form._busy=false;render();
 }
+async function moveLegume(id,dir){
+  const l=legById(id);if(!l)return;
+  const grp=S.legumes.filter(x=>x.mode===l.mode);const i=grp.indexOf(l),j=i+dir;if(j<0||j>=grp.length)return;
+  [grp[i],grp[j]]=[grp[j],grp[i]];
+  const ups=[];grp.forEach((x,k)=>{const o=MODES.indexOf(l.mode)*100+k+1;if(x.ordre!==o){x.ordre=o;ups.push(sb.from("legumes").update({ordre:o}).eq("id",Number(x.id)))}});
+  S.legumes.sort((a,b)=>MODES.indexOf(a.mode)-MODES.indexOf(b.mode)||(a.ordre-b.ordre)||(a.id-b.id));render();
+  const res=await Promise.all(ups);const er=res.find(r=>r.error);if(er)toast(errMsg(er.error),true);
+  await loadRef();render();
+}
+function setPrice(lid,prix,depuis){
+  if(!tarifsOf(lid).length)depuis=PRIX_ORIGINE;
+  return sb.from("tarifs").upsert({legume_id:Number(lid),prix,depuis},{onConflict:"legume_id,depuis"});
+}
 
 document.addEventListener("click",async e=>{
+  const row=e.target.closest("tr[data-sel-s]");
+  if(row&&!e.target.closest("button")){const p=S.saisonniers.find(x=>x.id===row.dataset.selS);S.selS=p.id;S.form["es-nom"]=p.nom;S.form["es-prenom"]=p.prenom;render();return}
   const t=e.target.closest("button");if(!t||t.closest("dialog"))return;
-  if(t.dataset.view){S.view=t.dataset.view;S.editCfg=null;store("guidal.view",S.view);render();window.scrollTo(0,0);return}
-  if(t.dataset.pick){S.selected=t.dataset.pick;const ex=(S.day||{})[S.selected];S.draft={};if(ex)for(const k in ex.q)if(ex.q[k]>0)S.draft[k]=ex.q[k];render();window.scrollTo(0,0);return}
-  if(t.dataset.step){const id=t.dataset.leg;const v=Math.max(0,(Number(S.draft[id])||0)+Number(t.dataset.step));S.draft[id]=v||"";const inp=document.getElementById("q-"+id);if(inp)inp.value=S.draft[id];return}
+  if(t.dataset.view){S.view=t.dataset.view;S.editCfg=null;store("guidal.view",S.view);if(S.view==="saisonniers")loadMois();render();window.scrollTo(0,0);return}
+  if(t.dataset.lang){S.lang=t.dataset.lang;store("guidal.lang",S.lang);document.documentElement.lang=S.lang;render();return}
+  if(t.dataset.demo){login(t.dataset.demo,"demo");return}
+  if(t.dataset.pick){S.selected=t.dataset.pick;const ex=(S.day||{})[S.selected];S.draft={};S.hdraft={md:"",mf:"",ad:"",af:""};
+    if(ex){for(const k in ex.q)if(ex.q[k]>0)S.draft[k]=ex.q[k];if(ex.h)S.hdraft={...ex.h}}
+    render();window.scrollTo(0,0);return}
+  if(t.dataset.step){const id=t.dataset.leg;const v=Math.max(0,Math.round(((Number(S.draft[id])||0)+Number(t.dataset.step))*100)/100);S.draft[id]=v||"";const inp=document.getElementById("q-"+id);if(inp)inp.value=S.draft[id];updMeter();return}
   if(t.dataset.period){S.period=t.dataset.period;loadRange();return}
+  if(t.dataset.sfilter){S.sFilter=t.dataset.sfilter;render();return}
   if(t.dataset.edit){const [d,s]=t.dataset.edit.split("|");openEdit(d,s);return}
-  if(t.dataset.toggleS){const p=S.saisonniers.find(x=>x.id===t.dataset.toggleS);if(await run(sb.from("saisonniers").update({actif:!p.actif}).eq("id",Number(p.id)))){await loadRef();render()}return}
+  if(t.dataset.move){const [id,dir]=t.dataset.move.split("|");moveLegume(id,Number(dir));return}
+  if(t.dataset.toggleS){const p=S.saisonniers.find(x=>x.id===t.dataset.toggleS);if(await run(sb.from("saisonniers").update({actif:!p.actif}).eq("id",Number(p.id)),p.actif?"Marqué parti":"Réactivé")){await loadRef();render()}return}
   if(t.dataset.toggleL){const l=S.legumes.find(x=>x.id===t.dataset.toggleL);if(await run(sb.from("legumes").update({actif:!l.actif}).eq("id",Number(l.id)))){await loadRef();render()}return}
-  if(t.dataset.editS){const p=S.saisonniers.find(x=>x.id===t.dataset.editS);S.editCfg={kind:"s",id:p.id};S.form["es-nom"]=p.nom;S.form["es-prenom"]=p.prenom;render();return}
-  if(t.dataset.editL){const l=S.legumes.find(x=>x.id===t.dataset.editL);S.editCfg={kind:"l",id:l.id};S.form["el-nom"]=l.nom;S.form["el-unite"]=l.unite;render();return}
+  if(t.dataset.editL){const l=S.legumes.find(x=>x.id===t.dataset.editL);S.editCfg={kind:"l",id:l.id};S.form["el-nom"]=l.nom;S.form["el-nompt"]=l.nom_pt||"";S.form["el-mode"]=l.mode;S.form["el-prix"]="";S.form["el-depuis"]=today();render();return}
   if(t.dataset.editU){const p=S.profils.find(x=>x.id===t.dataset.editU);S.editCfg={kind:"u",id:p.id};S.form["eu-nom"]=p.nom;S.form["eu-ident"]=p.identifiant;S.form["eu-role"]=p.role;render();return}
   if(t.dataset.pw){S.editCfg={kind:"pw",id:t.dataset.pw};S.form["pw-new"]="";render();return}
   if(t.dataset.toggleU){const p=S.profils.find(x=>x.id===t.dataset.toggleU);if(await run(sb.from("profils").update({actif:!p.actif}).eq("id",p.id),p.actif?"Compte désactivé":"Compte réactivé")){await loadProfils();render()}return}
   switch(t.dataset.act){
     case "logout":try{if(navigator.credentials&&navigator.credentials.preventSilentAccess)await navigator.credentials.preventSilentAccess()}catch(e){}await sb.auth.signOut();break;
+    case "demo-reset":sb.reset();break;
     case "share":openShare();break;
     case "cfg-cancel":S.editCfg=null;render();break;
     case "back":S.selected=null;render();break;
+    case "same-h":S.hdraft={...S.lastH};for(const k of ["md","mf","ad","af"]){const i=document.getElementById("h-"+k);if(i)i.value=S.hdraft[k]||""}updMeter();break;
     case "validate":{
       const q={};for(const l of activeLegumes())q[l.id]=Math.max(0,Number(S.draft[l.id])||0);
-      t.disabled=true;t.textContent="Envoi…";
-      const {error}=await sb.rpc("enregistrer_saisie",{p_date:S.date,p_saisonnier:Number(S.selected),p_quantites:q});
-      if(error){toast(errMsg(error),true);t.disabled=false;t.textContent="Valider la saisie";return}
-      const n=personName(S.selected);S.selected=null;S.search="";toast("Saisie enregistrée · "+n);render();loadDay();window.scrollTo(0,0);break}
+      const h=S.hdraft;const chk=checkHours(h,q,S.lang);if(chk)return toast(chk,true);
+      const ex=(S.day||{})[S.selected];
+      if(!ex&&!presH(h)&&!Object.values(q).some(v=>v>0))return toast(T("errEmpty"),true);
+      t.disabled=true;t.textContent=T("sending");
+      const {error}=await sb.rpc("enregistrer_journee",{p_date:S.date,p_saisonnier:Number(S.selected),p_quantites:q,p_horaires:horairesDb(h)});
+      if(error){toast(errMsg(error),true);t.disabled=false;t.textContent=T("validate");return}
+      if(presH(h))S.lastH={...h};
+      const n=personName(S.selected);S.selected=null;S.search="";toast(T("saved")+" · "+n);render();loadDay();if(isResp()){loadRange();loadMois()}window.scrollTo(0,0);break}
     case "prev":shiftPeriod(-1);break;
     case "next":shiftPeriod(1);break;
     case "now":S.anchor=today();loadRange();break;
@@ -687,12 +1011,15 @@ document.addEventListener("click",async e=>{
 document.addEventListener("input",e=>{
   const t=e.target;
   if(t.id==="f-search"){S.search=t.value;render()}
-  else if(t.dataset&&t.dataset.q){S.draft[t.dataset.q]=t.value}
+  else if(t.id==="f-ssearch"){S.sSearch=t.value;render()}
+  else if(t.dataset&&t.dataset.q){S.draft[t.dataset.q]=t.value;updMeter()}
+  else if(t.dataset&&t.dataset.h){S.hdraft[t.dataset.h]=t.value;updMeter()}
   else if(t.dataset&&"keep" in t.dataset){S.form[t.id]=t.value}
 });
 document.addEventListener("change",e=>{
   const t=e.target;
   if(t.id==="f-date"&&t.value){S.date=t.value;S.selected=null;S.day=null;loadDay()}
+  else if(t.dataset&&t.dataset.h){S.hdraft[t.dataset.h]=t.value;updMeter()}
   else if(t.dataset&&"keep" in t.dataset){S.form[t.id]=t.value}
 });
 document.addEventListener("submit",async e=>{
@@ -703,13 +1030,21 @@ document.addEventListener("submit",async e=>{
     case "form-login":login(v("l-ident"),v("l-mdp"));break;
     case "form-s":{const nom=v("s-nom").trim(),prenom=v("s-prenom").trim();if(!nom||!prenom)return;
       if(await run(sb.from("saisonniers").insert({nom,prenom}),prenom+" "+nom+" ajouté(e)")){S.form["s-nom"]=S.form["s-prenom"]="";await loadRef();render()}break}
-    case "form-l":{const nom=v("l-nom").trim(),unite=v("l-unite")||"Botte";if(!nom)return;
-      const ordre=S.legumes.reduce((m,l)=>Math.max(m,l.ordre||0),0)+1;
-      if(await run(sb.from("legumes").insert({nom,unite,ordre}),nom+" ajouté")){S.form["l-nom"]="";await loadRef();render()}break}
+    case "form-l":{const nom=v("l-nom").trim(),nom_pt=v("l-nompt").trim()||null,mode=v("l-mode")||"colis",prixTxt=v("l-prix");if(!nom)return;
+      const ordre=MODES.indexOf(mode)*100+S.legumes.filter(l=>l.mode===mode).length+1;
+      if(!await run(sb.from("legumes").insert({nom,nom_pt,mode,ordre})))break;
+      await loadRef();
+      if(prixTxt!==""){const l=S.legumes.filter(x=>x.nom===nom&&x.mode===mode).sort((a,b)=>b.id-a.id)[0];if(l)await run(setPrice(l.id,Math.max(0,Number(prixTxt)),PRIX_ORIGINE))}
+      toast(nom+" ajouté");S.form["l-nom"]=S.form["l-nompt"]=S.form["l-prix"]="";await loadRef();render();break}
     case "form-es":{const nom=v("es-nom").trim(),prenom=v("es-prenom").trim();if(!nom||!prenom)return;
-      if(await run(sb.from("saisonniers").update({nom,prenom}).eq("id",Number(f.dataset.id)),"Saisonnier modifié")){S.editCfg=null;await loadRef();render()}break}
-    case "form-el":{const nom=v("el-nom").trim(),unite=v("el-unite");if(!nom)return;
-      if(await run(sb.from("legumes").update({nom,unite}).eq("id",Number(f.dataset.id)),"Légume modifié")){S.editCfg=null;await loadRef();render()}break}
+      if(await run(sb.from("saisonniers").update({nom,prenom}).eq("id",Number(f.dataset.id)),"Saisonnier modifié")){await loadRef();render()}break}
+    case "form-el":{const id=f.dataset.id,nom=v("el-nom").trim(),nom_pt=v("el-nompt").trim()||null,mode=v("el-mode"),prixTxt=v("el-prix"),depuis=v("el-depuis")||today();if(!nom)return;
+      const l=legById(id);const upd={nom,nom_pt,mode};if(l&&l.mode!==mode)upd.ordre=MODES.indexOf(mode)*100+S.legumes.filter(x=>x.mode===mode).length+1;
+      if(!await run(sb.from("legumes").update(upd).eq("id",Number(id))))break;
+      if(prixTxt!==""&&!await run(setPrice(id,Math.max(0,Number(prixTxt)),depuis)))break;
+      toast(prixTxt!==""?"Produit et prix enregistrés":"Produit modifié");S.editCfg=null;await loadRef();render();break}
+    case "form-smic":{const taux=Number(v("sm-taux")),depuis=v("sm-depuis");if(!(taux>0)||!depuis)return toast("Indiquez un taux et une date.",true);
+      if(await run(sb.from("smic").upsert({depuis,taux},{onConflict:"depuis"}),"SMIC enregistré")){S.form["sm-taux"]="";await loadRef();render()}break}
     case "form-u":createAccount();break;
     case "form-eu":{
       const id=f.dataset.id,p=S.profils.find(x=>x.id===id),nom=v("eu-nom").trim(),ident=v("eu-ident").trim().toLowerCase();
@@ -734,6 +1069,7 @@ document.addEventListener("submit",async e=>{
 });
 
 /* ---------- démarrage ---------- */
+document.documentElement.lang=S.lang;
 render();
 if(sb){
   sb.auth.getSession().then(({data})=>onSession(data.session));

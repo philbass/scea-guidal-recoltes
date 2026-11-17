@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maquettes v2 – SCEA Guidal</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap">
+<style>
+:root{
+  --green:#1E4736; --green-ink:#1E4736; --red:#C61D2D; --ok:#2E7D32; --ok-mark:#50AF54;
+  --bg:#F2EFE6; --surface:#FBFAF5; --surface-2:#E9E5D8; --line:#D9D3C2;
+  --fg:#1F2A24; --muted:#5E6A61; --on-green:#F2EFE6; --ok-bg:#E3F1E1; --red-bg:#F8E1E2; --warn-bg:#FBF0D9; --warn:#8A5A00;
+  --display:"Playfair Display", Georgia, serif; --body:"Montserrat","Segoe UI",system-ui,sans-serif; --r:10px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#E4E0D3;color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45}
+.page{max-width:1240px;margin:0 auto;padding:24px 16px 80px}
+.doc h1{font-family:var(--display);color:var(--green);font-size:2rem;margin:0 0 4px}
+.doc .lead{color:var(--muted);margin:0 0 20px;max-width:760px}
+.toc{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px;position:sticky;top:0;background:#E4E0D3;padding:10px 0;z-index:5}
+.toc a{background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:7px 14px;color:var(--green);font-weight:600;font-size:.85rem;text-decoration:none}
+.toc a:hover{background:var(--green);color:var(--on-green)}
+section.scr{margin-bottom:56px}
+.scr > h2{font-family:var(--display);color:var(--green);font-size:1.6rem;margin:0 0 6px}
+.scr > .why{max-width:820px;color:var(--fg);margin:0 0 6px}
+.scr > ul.why{padding-left:20px;margin:6px 0 18px}
+.scr > ul.why li{margin-bottom:4px}
+.ask{display:block;background:var(--warn-bg);border-left:4px solid #E0A526;padding:10px 14px;border-radius:6px;margin:10px 0 18px;max-width:820px;font-size:.9rem}
+.ask b{color:var(--warn)}
+.opt{display:inline-block;border:1px dashed var(--muted);color:var(--muted);font-size:.65rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:2px}
+
+/* ---- cadres ---- */
+.phones{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start}
+.phone{width:375px;max-width:100%;height:760px;border:10px solid #1b1b1b;border-radius:40px;background:var(--bg);overflow:hidden;display:flex;flex-direction:column;box-shadow:0 18px 40px rgba(0,0,0,.18)}
+.phone .cap{font-size:.8rem;font-weight:700;color:var(--muted);text-align:center;margin-top:10px}
+.phone-col{display:flex;flex-direction:column;align-items:center}
+.screen{flex:1;overflow-y:auto;position:relative}
+.desk{border:1px solid #bdb6a3;border-radius:12px;overflow:hidden;background:var(--bg);box-shadow:0 18px 40px rgba(0,0,0,.14)}
+.desk .chrome{background:#d8d3c4;padding:8px 12px;display:flex;gap:6px;align-items:center}
+.desk .chrome i{width:11px;height:11px;border-radius:50%;background:#b9b2a0;display:block}
+.desk .chrome span{margin-left:12px;background:#ece8dc;border-radius:6px;font-size:.75rem;color:var(--muted);padding:3px 12px;flex:1;max-width:420px}
+
+/* ---- styles de l'app ---- */
+header.brand{background:var(--green);color:var(--on-green)}
+header.brand .in{display:flex;align-items:center;gap:10px;padding:12px 16px;flex-wrap:wrap}
+.logo{width:40px;height:40px;flex:none}
+.brand h1{font-family:var(--display);font-size:1.2rem;margin:0;line-height:1.1}
+.brand .tag{font-size:.62rem;text-transform:uppercase;letter-spacing:.12em;opacity:.8}
+.userbox{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:.8rem}
+.userbox .role{font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;opacity:.8}
+.btn-out{background:none;border:1px solid rgba(242,239,230,.45);color:var(--on-green);border-radius:8px;padding:6px 10px;font:600 .75rem var(--body)}
+.lang{display:inline-flex;border:1px solid rgba(242,239,230,.5);border-radius:99px;overflow:hidden}
+.lang button{background:none;border:0;color:var(--on-green);font:700 .72rem var(--body);padding:6px 10px;cursor:pointer;letter-spacing:.05em}
+.lang button[aria-pressed="true"]{background:var(--on-green);color:var(--green)}
+nav.tabs{background:var(--green);border-top:1px solid rgba(255,255,255,.12);display:flex;gap:2px;padding:0 16px;overflow-x:auto}
+nav.tabs b{color:var(--on-green);opacity:.75;font:600 .85rem var(--body);padding:11px 12px;border-bottom:3px solid transparent;white-space:nowrap}
+nav.tabs b.on{opacity:1;border-bottom-color:var(--red)}
+nav.tabs b.new::after{content:"nouveau";font-size:.55rem;background:var(--ok-mark);color:#fff;border-radius:4px;padding:1px 4px;margin-left:6px;vertical-align:2px;text-transform:uppercase;letter-spacing:.05em}
+.main{padding:16px}
+h3.t{font-family:var(--display);font-size:1.35rem;margin:0;color:var(--green-ink)}
+h4{font-family:var(--display);font-size:1.05rem;margin:0 0 8px;color:var(--green-ink)}
+.muted{color:var(--muted)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.between{justify-content:space-between}
+.stack{display:flex;flex-direction:column;gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.inp{font:500 .95rem var(--body);color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 11px;min-height:42px;display:flex;align-items:center}
+.inp.ph{color:#9aa39c}
+.btn{font:600 .88rem var(--body);border-radius:8px;padding:9px 15px;min-height:40px;border:1px solid var(--line);background:var(--surface);color:var(--fg);white-space:nowrap;display:inline-flex;align-items:center;justify-content:center}
+.btn.primary{background:var(--green);border-color:var(--green);color:var(--on-green)}
+.btn.validate{background:var(--red);border-color:var(--red);color:#fff}
+.btn.ghost{background:none;border-color:transparent;color:var(--green-ink);padding-inline:4px}
+.btn.sm{padding:5px 10px;min-height:32px;font-size:.8rem}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:.64rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:3px 8px;border-radius:99px;white-space:nowrap}
+.badge.ok{background:var(--ok-bg);color:var(--ok)}
+.badge.todo{background:var(--surface-2);color:var(--muted)}
+.badge.off{background:var(--red-bg);color:var(--red)}
+.badge.warn{background:var(--warn-bg);color:var(--warn)}
+.people{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--surface)}
+.person{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line);min-height:58px}
+.person:last-child{border-bottom:0}
+.person .nm{font-weight:600;flex:1;min-width:0}
+.person .sum{font-size:.74rem;color:var(--muted);font-weight:500}
+.sec{display:flex;align-items:center;gap:8px;margin:6px 0 -4px}
+.sec h5{margin:0;font:700 .72rem var(--body);text-transform:uppercase;letter-spacing:.1em;color:var(--green-ink)}
+.sec .ln{flex:1;height:1px;background:var(--line)}
+.sec .chip{font-size:.66rem;font-weight:700;color:var(--muted)}
+.qrow{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:9px 12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.qrow.filled{border-color:var(--ok-mark);box-shadow:inset 3px 0 0 var(--ok-mark)}
+.qrow .lg{font-weight:600;font-size:.92rem}
+.qrow .un{font-size:.66rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.stepper{display:flex;align-items:center;gap:5px;flex:none}
+.stepper i{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surface-2);color:var(--green-ink);font:700 1.25rem var(--body);display:grid;place-items:center;font-style:normal}
+.stepper b{width:66px;height:40px;display:grid;place-items:center;border:1px solid var(--line);border-radius:8px;background:var(--surface);font-size:1.05rem;font-variant-numeric:tabular-nums}
+.stepper b.z{color:#b9b2a0;font-weight:500}
+.hours{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px}
+.hcard .hd{font-weight:700;font-size:.85rem;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.hcard .tm{display:flex;align-items:center;gap:6px}
+.hcard .tm .inp{min-height:38px;padding:6px 8px;font-weight:700;font-variant-numeric:tabular-nums;flex:1;justify-content:center}
+.total{display:flex;justify-content:space-between;align-items:center;background:var(--green);color:var(--on-green);border-radius:var(--r);padding:10px 14px;font-weight:600}
+.total strong{font-family:var(--display);font-size:1.3rem}
+.meter{font-size:.78rem;padding:8px 12px;border-radius:8px;background:var(--ok-bg);color:var(--ok);font-weight:600}
+.actionbar{position:sticky;bottom:0;background:var(--bg);padding:10px 16px 14px;border-top:1px solid var(--line);display:flex}
+.actionbar .btn{flex:1;font-size:1rem;min-height:46px}
+.tscroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.84rem}
+th,td{padding:8px 11px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{font-size:.64rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--surface-2)}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tfoot td{font-weight:700;border-bottom:0;background:var(--surface-2)}
+tr.sel td{background:var(--ok-bg)}
+.zero{color:#c9c2b0}
+.eur{font-weight:700;color:var(--green-ink)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.tile{padding:12px 14px;border-radius:var(--r);background:var(--surface);border:1px solid var(--line)}
+.tile .v{font-family:var(--display);font-size:1.7rem;color:var(--green-ink);font-variant-numeric:tabular-nums;line-height:1.1}
+.tile .l{font-size:.76rem;color:var(--muted)}
+.tile.money{background:var(--green);border-color:var(--green)}
+.tile.money .v,.tile.money .l{color:var(--on-green)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg b{padding:8px 13px;font:600 .82rem var(--body)}
+.seg b.on{background:var(--green);color:var(--on-green)}
+.split{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:14px;align-items:start}
+.formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end}
+.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mode{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface);font-size:.8rem}
+.mode b{display:block;font-size:.88rem}
+.mode.on{border-color:var(--green);box-shadow:inset 0 0 0 1px var(--green);background:var(--ok-bg)}
+.drag{color:#b9b2a0;cursor:grab;font-size:1rem;letter-spacing:-2px}
+.pt{color:var(--muted);font-size:.8rem}
+@media (max-width:900px){.split{grid-template-columns:1fr}.modes{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="radis" viewBox="0 0 64 64">
+    <circle cx="32" cy="32" r="30" fill="#F2EFE6"/><circle cx="32" cy="32" r="27" fill="none" stroke="#1E4736" stroke-width="2"/>
+    <path d="M32 31 C26 22 20 18 22 11 C28 12 31 20 32 27Z" fill="#4E8F57"/><path d="M32 31 C38 22 44 18 42 11 C36 12 33 20 32 27Z" fill="#4E8F57"/>
+    <path d="M32 30 C31 22 30 15 32 8 C34 15 33 22 32 30Z" fill="#2F6B3E"/><circle cx="32" cy="39" r="9" fill="#C61D2D"/>
+    <path d="M25 42 C28 47 36 47 39 42 C36 44 28 44 25 42Z" fill="#F2EFE6"/><path d="M32 48 L32 54" stroke="#C61D2D" stroke-width="1.5" stroke-linecap="round"/>
+  </symbol>
+</svg>
+
+<div class="page">
+<div class="doc">
+  <h1>Maquettes v2 : propositions</h1>
+  <p class="lead">Ce sont des maquettes, rien n'est branché à la base. Les noms et les prix sont des exemples. Sur les deux téléphones, le bouton <b>FR | PT</b> fonctionne : essayez-le.</p>
+</div>
+<nav class="toc">
+  <a href="#saisie">1 · Saisie (téléphone)</a>
+  <a href="#saisonniers">2 · Saisonniers</a>
+  <a href="#produits">3 · Produits et tarifs</a>
+  <a href="#supervision">4 · Supervision et paie</a>
+</nav>
+
+<!-- ================= 1. SAISIE ================= -->
+<section class="scr" id="saisie">
+  <h2>1 · Saisie par le chef d'équipe</h2>
+  <ul class="why">
+    <li><b>Bouton FR | PT</b> en haut de l'écran. Le choix reste mémorisé sur le téléphone. Les noms des produits ont aussi leur traduction.</li>
+    <li>La fiche d'un saisonnier est organisée en 4 blocs, dans l'ordre de la journée : <b>Horaires</b> (matin et après-midi), <b>Au colis</b>, <b>À l'unité</b>, <b>À l'heure</b>.</li>
+    <li>Le total de présence se calcule tout seul. Une barre vérifie que les heures « à l'heure » ne dépassent pas la présence.</li>
+    <li>Les prix ne s'affichent jamais chez le chef : il saisit des quantités, pas des montants.</li>
+  </ul>
+  <div class="ask"><b>À confirmer :</b> j'ai compris « date de début et de fin, matin et après-midi » comme <b>les heures d'arrivée et de départ de chaque demi-journée</b>, saisies chaque jour. Pour les tâches à l'heure, le chef indique combien d'heures sur chaque tâche. Si vous pensiez plutôt aux dates d'arrivée et de départ du saisonnier sur la saison, voyez l'écran 2.</div>
+
+  <div class="phones">
+    <div class="phone-col">
+      <div class="phone" data-lang-scope>
+        <header class="brand"><div class="in">
+          <svg class="logo"><use href="#radis"/></svg>
+          <div><div class="tag">SCEA Guidal</div><h1 data-pt="Registo">Saisie</h1></div>
+          <div class="userbox"><div class="lang" role="group" aria-label="Langue"><button aria-pressed="true" data-l="fr">FR</button><button aria-pressed="false" data-l="pt">PT</button></div></div>
+        </div></header>
+        <div class="screen"><div class="main stack">
+          <div class="row between"><h3 class="t" data-pt="Registo do dia">Saisie du jour</h3><span class="muted" style="font-size:.8rem" data-pt="2 / 6 registados">2 / 6 saisis</span></div>
+          <div class="row" style="align-items:flex-end">
+            <label class="f" style="flex:0 0 130px"><span>Date</span><div class="inp">17/11/2026</div></label>
+            <label class="f" style="flex:1"><span data-pt="Procurar">Rechercher</span><div class="inp ph" data-pt="Nome">Nom ou prénom</div></label>
+          </div>
+          <div class="people">
+            <div class="person"><span class="nm">COSTA Maria<div class="sum"><span data-pt="8 h 30 · 14 caixas · 3 h sacha">8 h 30 · 14 colis · 3 h binage</span></div></span><span class="badge ok" data-pt="✓ Registado">✓ Saisi</span></div>
+            <div class="person"><span class="nm">DUBOIS Marc<div class="sum"><span data-pt="7 h 00 · 7 h plantação">7 h 00 · 7 h plantation</span></div></span><span class="badge ok" data-pt="✓ Registado">✓ Saisi</span></div>
+            <div class="person"><span class="nm">MARTINS Rui</span><span class="badge todo" data-pt="Por registar">À saisir</span></div>
+            <div class="person"><span class="nm">PEREIRA Ana</span><span class="badge todo" data-pt="Por registar">À saisir</span></div>
+            <div class="person"><span class="nm">SILVA João</span><span class="badge todo" data-pt="Por registar">À saisir</span></div>
+            <div class="person"><span class="nm">SOUSA Paulo</span><span class="badge todo" data-pt="Por registar">À saisir</span></div>
+          </div>
+        </div></div>
+      </div>
+      <div class="cap">Liste du jour</div>
+    </div>
+
+    <div class="phone-col">
+      <div class="phone" data-lang-scope>
+        <header class="brand"><div class="in">
+          <svg class="logo"><use href="#radis"/></svg>
+          <div><div class="tag">SCEA Guidal</div><h1 data-pt="Registo">Saisie</h1></div>
+          <div class="userbox"><div class="lang" role="group" aria-label="Langue"><button aria-pressed="true" data-l="fr">FR</button><button aria-pressed="false" data-l="pt">PT</button></div></div>
+        </div></header>
+        <div class="screen"><div class="main stack">
+          <div class="row between"><span class="btn ghost" data-pt="← Voltar">← Retour</span><span class="muted" style="font-size:.8rem" data-pt="terça 17 nov.">mar. 17 nov.</span></div>
+          <h3 class="t">Maria COSTA</h3>
+
+          <div class="sec"><h5 data-pt="Horário">Horaires</h5><span class="ln"></span></div>
+          <div class="hours">
+            <div class="hcard"><div class="hd">☀ <span data-pt="Manhã">Matin</span></div><div class="tm"><div class="inp">07:00</div>–<div class="inp">12:00</div></div></div>
+            <div class="hcard"><div class="hd">◐ <span data-pt="Tarde">Après-midi</span></div><div class="tm"><div class="inp">13:30</div>–<div class="inp">17:00</div></div></div>
+          </div>
+          <div class="total"><span data-pt="Presença">Présence</span><strong>8 h 30</strong></div>
+
+          <div class="sec"><h5 data-pt="À caixa">Au colis</h5><span class="ln"></span></div>
+          <div class="qrow filled"><div><div class="lg" data-pt="Rabanete">Radis</div><div class="un" data-pt="caixas">colis</div></div><div class="stepper"><i>−</i><b>14</b><i>+</i></div></div>
+          <div class="qrow"><div><div class="lg" data-pt="Cebola branca">Oignons blancs</div><div class="un" data-pt="caixas">colis</div></div><div class="stepper"><i>−</i><b class="z">0</b><i>+</i></div></div>
+          <div class="qrow"><div><div class="lg" data-pt="Cebola roxa">Oignons rouges</div><div class="un" data-pt="caixas">colis</div></div><div class="stepper"><i>−</i><b class="z">0</b><i>+</i></div></div>
+          <div class="qrow"><div><div class="lg" data-pt="Cebolinho">Ciboule</div><div class="un" data-pt="caixas">colis</div></div><div class="stepper"><i>−</i><b class="z">0</b><i>+</i></div></div>
+          <div class="qrow"><div><div class="lg" data-pt="Salsa">Persil</div><div class="un" data-pt="caixas">colis</div></div><div class="stepper"><i>−</i><b class="z">0</b><i>+</i></div></div>
+
+          <div class="sec"><h5 data-pt="À unidade">À l'unité</h5><span class="ln"></span></div>
+          <div class="qrow"><div><div class="lg" data-pt="Salsa scotch">Persil scotch</div><div class="un" data-pt="unidades">unités</div></div><div class="stepper"><i>−</i><b class="z">0</b><i>+</i></div></div>
+
+          <div class="sec"><h5 data-pt="À hora">À l'heure</h5><span class="ln"></span><span class="chip" data-pt="passo 0,5 h">pas de 0,5 h</span></div>
+          <div class="qrow"><div><div class="lg" data-pt="Descasque">Épluchage</div><div class="un" data-pt="horas">heures</div></div><div class="stepper"><i>−</i><b class="z">0</b><i>+</i></div></div>
+          <div class="qrow"><div><div class="lg" data-pt="Plantação">Plantation</div><div class="un" data-pt="horas">heures</div></div><div class="stepper"><i>−</i><b class="z">0</b><i>+</i></div></div>
+          <div class="qrow filled"><div><div class="lg" data-pt="Sacha">Binage</div><div class="un" data-pt="horas">heures</div></div><div class="stepper"><i>−</i><b>3</b><i>+</i></div></div>
+          <div class="qrow"><div><div class="lg" data-pt="Couve-flor">Chou-fleur</div><div class="un" data-pt="horas">heures</div></div><div class="stepper"><i>−</i><b class="z">0</b><i>+</i></div></div>
+          <div class="qrow"><div><div class="lg" data-pt="Couve verde">Chou vert</div><div class="un" data-pt="horas">heures</div></div><div class="stepper"><i>−</i><b class="z">0</b><i>+</i></div></div>
+          <div class="qrow"><div><div class="lg" data-pt="Couve branca">Chou blanc</div><div class="un" data-pt="horas">heures</div></div><div class="stepper"><i>−</i><b class="z">0</b><i>+</i></div></div>
+          <div class="qrow"><div><div class="lg" data-pt="Couve roxa">Chou rouge</div><div class="un" data-pt="horas">heures</div></div><div class="stepper"><i>−</i><b class="z">0</b><i>+</i></div></div>
+          <div class="qrow"><div><div class="lg" data-pt="Curgete">Courgette</div><div class="un" data-pt="horas">heures</div></div><div class="stepper"><i>−</i><b class="z">0</b><i>+</i></div></div>
+          <div class="qrow"><div><div class="lg" data-pt="Pastinaca">Panais</div><div class="un" data-pt="horas">heures</div></div><div class="stepper"><i>−</i><b class="z">0</b><i>+</i></div></div>
+          <div class="qrow"><div><div class="lg" data-pt="Aipo">Céleri branche</div><div class="un" data-pt="horas">heures</div></div><div class="stepper"><i>−</i><b class="z">0</b><i>+</i></div></div>
+          <div class="qrow"><div><div class="lg" data-pt="Brócolos">Brocoli</div><div class="un" data-pt="horas">heures</div></div><div class="stepper"><i>−</i><b class="z">0</b><i>+</i></div></div>
+          <div class="meter" data-pt="✓ 3 h à hora · 5 h 30 à tarefa · total 8 h 30">✓ 3 h à l'heure · 5 h 30 à la tâche · total 8 h 30</div>
+        </div>
+        <div class="actionbar"><span class="btn validate" data-pt="Validar registo">Valider la saisie</span></div>
+        </div>
+      </div>
+      <div class="cap">Fiche d'un saisonnier (faire défiler)</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 2. SAISONNIERS ================= -->
+<section class="scr" id="saisonniers">
+  <h2>2 · Onglet « Saisonniers » (responsable)</h2>
+  <ul class="why">
+    <li>L'ancien onglet « Saisonniers et légumes » est <b>séparé en deux</b> : les personnes ici, les produits dans l'onglet 3.</li>
+    <li>À gauche, la liste avec le mois en cours en un coup d'œil. À droite, la fiche de la personne choisie : identité, statut et récapitulatif du mois.</li>
+    <li>Les champs « Arrivée » et « Départ » sont <span class="opt">option</span> : à garder seulement si vous voulez suivre les dates de contrat de la saison.</li>
+  </ul>
+  <div class="desk">
+    <div class="chrome"><i></i><i></i><i></i><span>localhost · SCEA Guidal (version locale)</span></div>
+    <header class="brand"><div class="in"><svg class="logo"><use href="#radis"/></svg><div><div class="tag">Terroir &amp; Fraîcheur · depuis 1995</div><h1>SCEA Guidal</h1></div>
+      <div class="userbox"><div><div>Responsable</div><div class="role">Responsable</div></div><span class="btn-out">Partager</span><span class="btn-out">Déconnexion</span></div></div></header>
+    <nav class="tabs"><b>Saisie</b><b>Supervision</b><b class="on new">Saisonniers</b><b class="new">Produits et tarifs</b><b>Équipe</b></nav>
+    <div class="main stack">
+      <div class="row between"><h3 class="t">Saisonniers</h3><span class="btn primary">+ Ajouter un saisonnier</span></div>
+      <div class="split">
+        <div class="stack">
+          <div class="row"><div class="seg"><b class="on">Actifs (6)</b><b>Partis (2)</b><b>Tous</b></div><div class="inp ph" style="flex:1;min-width:160px">Rechercher…</div></div>
+          <div class="tscroll"><table>
+            <thead><tr><th>Saisonnier</th><th class="n">Jours</th><th class="n">Heures</th><th class="n">Colis</th><th>Statut</th></tr></thead>
+            <tbody>
+              <tr class="sel"><td><b>COSTA</b> Maria</td><td class="n">12</td><td class="n">98,5</td><td class="n">164</td><td><span class="badge ok">Actif</span></td></tr>
+              <tr><td><b>DUBOIS</b> Marc</td><td class="n">11</td><td class="n">81,0</td><td class="n zero">0</td><td><span class="badge ok">Actif</span></td></tr>
+              <tr><td><b>MARTINS</b> Rui</td><td class="n">12</td><td class="n">96,0</td><td class="n">201</td><td><span class="badge ok">Actif</span></td></tr>
+              <tr><td><b>PEREIRA</b> Ana</td><td class="n">9</td><td class="n">72,5</td><td class="n">88</td><td><span class="badge ok">Actif</span></td></tr>
+              <tr><td><b>SILVA</b> João</td><td class="n">12</td><td class="n">99,0</td><td class="n">143</td><td><span class="badge ok">Actif</span></td></tr>
+              <tr><td><b>SOUSA</b> Paulo</td><td class="n">4</td><td class="n">31,5</td><td class="n">22</td><td><span class="badge ok">Actif</span></td></tr>
+            </tbody></table></div>
+          <p class="muted" style="font-size:.8rem">Cumuls de novembre 2026. Cliquer sur une ligne ouvre la fiche.</p>
+        </div>
+        <div class="panel stack">
+          <div class="row between"><h4 style="margin:0">Fiche · Maria COSTA</h4><span class="badge ok">Actif</span></div>
+          <div class="formgrid">
+            <label class="f">Nom<div class="inp">COSTA</div></label>
+            <label class="f">Prénom<div class="inp">Maria</div></label>
+            <label class="f">Arrivée <span class="opt">option</span><div class="inp">02/11/2026</div></label>
+            <label class="f">Départ prévu <span class="opt">option</span><div class="inp ph">jj/mm/aaaa</div></label>
+          </div>
+          <div class="row"><span class="btn primary">Enregistrer</span><span class="btn">Marquer parti</span></div>
+          <div style="border-top:1px solid var(--line);padding-top:12px" class="stack">
+            <h4 style="margin:0">Novembre 2026</h4>
+            <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+              <div class="tile"><div class="v">98,5</div><div class="l">heures de présence</div></div>
+              <div class="tile"><div class="v">164</div><div class="l">colis</div></div>
+              <div class="tile money"><div class="v">770 €</div><div class="l">montant estimé</div></div>
+            </div>
+            <span class="btn ghost" style="align-self:flex-start">Voir ses saisies jour par jour →</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 3. PRODUITS ================= -->
+<section class="scr" id="produits">
+  <h2>3 · Onglet « Produits et tarifs » (responsable)</h2>
+  <ul class="why">
+    <li>Les produits sont rangés par <b>mode de paie</b> : au colis, à l'unité, à l'heure. Les unités Botte, Cageot et Kg disparaissent.</li>
+    <li>Chaque produit a son <b>prix</b> : prix par colis, par unité ou par heure. Seuls les responsables voient les prix. La base le garantit, pas seulement l'écran.</li>
+    <li>Chaque produit a aussi un <b>nom en portugais</b>, utilisé quand le chef passe en PT.</li>
+    <li>On peut changer l'ordre d'affichage en glissant les lignes (⋮⋮), et masquer un produit hors saison.</li>
+    <li>Les 17 produits ci-dessous <b>remplacent</b> les produits actuels (Radis en botte, Choux en colis).</li>
+  </ul>
+  <div class="ask"><b>À décider :</b> quand un prix change en cours de saison, faut-il <b>garder l'ancien prix pour les jours passés</b> ? Je le recommande, pour que la paie d'un mois déjà clos ne change pas. Le formulaire propose alors « Nouveau prix à partir du … ». Je n'ai pas vérifié les traductions portugaises (portugais du Portugal) : elles sont modifiables.</div>
+  <div class="desk">
+    <div class="chrome"><i></i><i></i><i></i><span>localhost · SCEA Guidal (version locale)</span></div>
+    <header class="brand"><div class="in"><svg class="logo"><use href="#radis"/></svg><div><div class="tag">Terroir &amp; Fraîcheur · depuis 1995</div><h1>SCEA Guidal</h1></div>
+      <div class="userbox"><div><div>Responsable</div><div class="role">Responsable</div></div><span class="btn-out">Partager</span><span class="btn-out">Déconnexion</span></div></div></header>
+    <nav class="tabs"><b>Saisie</b><b>Supervision</b><b class="new">Saisonniers</b><b class="on new">Produits et tarifs</b><b>Équipe</b></nav>
+    <div class="main stack">
+      <h3 class="t">Produits et tarifs</h3>
+      <div class="panel stack">
+        <h4 style="margin:0">Ajouter un produit ou une tâche</h4>
+        <div class="formgrid">
+          <label class="f">Nom (français)<div class="inp ph">Poireaux</div></label>
+          <label class="f">Nom (portugais)<div class="inp ph">Alho-francês</div></label>
+          <label class="f">Prix<div class="inp ph">0,00 €</div></label>
+          <span class="btn primary">Ajouter</span>
+        </div>
+        <div class="modes">
+          <div class="mode on"><b>Au colis</b>payé au nombre de colis</div>
+          <div class="mode"><b>À l'unité</b>payé à la pièce</div>
+          <div class="mode"><b>À l'heure</b>payé au temps passé</div>
+        </div>
+      </div>
+
+      <div class="tscroll"><table>
+        <thead><tr><th style="width:28px"></th><th>Produit</th><th>Portugais</th><th class="n">Prix</th><th>Statut</th><th></th></tr></thead>
+        <tbody>
+          <tr><td colspan="6" style="background:var(--surface-2);font-weight:700;color:var(--green-ink)">Au colis · 5 produits</td></tr>
+          <tr><td class="drag">⋮⋮</td><td><b>Radis</b></td><td class="pt">Rabanete</td><td class="n eur">2,50 € <span class="muted">/ colis</span></td><td><span class="badge ok">Actif</span></td><td><span class="btn sm">Modifier</span></td></tr>
+          <tr><td class="drag">⋮⋮</td><td><b>Oignons blancs</b></td><td class="pt">Cebola branca</td><td class="n eur">2,20 € <span class="muted">/ colis</span></td><td><span class="badge ok">Actif</span></td><td><span class="btn sm">Modifier</span></td></tr>
+          <tr><td class="drag">⋮⋮</td><td><b>Oignons rouges</b></td><td class="pt">Cebola roxa</td><td class="n eur">2,20 € <span class="muted">/ colis</span></td><td><span class="badge ok">Actif</span></td><td><span class="btn sm">Modifier</span></td></tr>
+          <tr><td class="drag">⋮⋮</td><td><b>Ciboule</b></td><td class="pt">Cebolinho</td><td class="n eur">2,00 € <span class="muted">/ colis</span></td><td><span class="badge ok">Actif</span></td><td><span class="btn sm">Modifier</span></td></tr>
+          <tr><td class="drag">⋮⋮</td><td><b>Persil</b></td><td class="pt">Salsa</td><td class="n eur">2,00 € <span class="muted">/ colis</span></td><td><span class="badge ok">Actif</span></td><td><span class="btn sm">Modifier</span></td></tr>
+          <tr><td colspan="6" style="background:var(--surface-2);font-weight:700;color:var(--green-ink)">À l'unité · 1 produit</td></tr>
+          <tr><td class="drag">⋮⋮</td><td><b>Persil scotch</b></td><td class="pt">Salsa scotch</td><td class="n eur">0,15 € <span class="muted">/ unité</span></td><td><span class="badge ok">Actif</span></td><td><span class="btn sm">Modifier</span></td></tr>
+          <tr><td colspan="6" style="background:var(--surface-2);font-weight:700;color:var(--green-ink)">À l'heure · 11 tâches</td></tr>
+          <tr><td class="drag">⋮⋮</td><td><b>Épluchage</b></td><td class="pt">Descasque</td><td class="n eur">12,00 € <span class="muted">/ h</span></td><td><span class="badge ok">Actif</span></td><td><span class="btn sm">Modifier</span></td></tr>
+          <tr><td class="drag">⋮⋮</td><td><b>Plantation</b></td><td class="pt">Plantação</td><td class="n eur">12,00 € <span class="muted">/ h</span></td><td><span class="badge ok">Actif</span></td><td><span class="btn sm">Modifier</span></td></tr>
+          <tr><td class="drag">⋮⋮</td><td><b>Binage</b></td><td class="pt">Sacha</td><td class="n eur">12,00 € <span class="muted">/ h</span></td><td><span class="badge ok">Actif</span></td><td><span class="btn sm">Modifier</span></td></tr>
+          <tr><td class="drag">⋮⋮</td><td><b>Chou-fleur</b></td><td class="pt">Couve-flor</td><td class="n eur">12,00 € <span class="muted">/ h</span></td><td><span class="badge ok">Actif</span></td><td><span class="btn sm">Modifier</span></td></tr>
+          <tr><td class="drag">⋮⋮</td><td><b>Chou vert</b></td><td class="pt">Couve verde</td><td class="n eur">12,00 € <span class="muted">/ h</span></td><td><span class="badge ok">Actif</span></td><td><span class="btn sm">Modifier</span></td></tr>
+          <tr><td class="drag">⋮⋮</td><td><b>Chou blanc</b></td><td class="pt">Couve branca</td><td class="n eur">12,00 € <span class="muted">/ h</span></td><td><span class="badge ok">Actif</span></td><td><span class="btn sm">Modifier</span></td></tr>
+          <tr><td class="drag">⋮⋮</td><td><b>Chou rouge</b></td><td class="pt">Couve roxa</td><td class="n eur">12,00 € <span class="muted">/ h</span></td><td><span class="badge ok">Actif</span></td><td><span class="btn sm">Modifier</span></td></tr>
+          <tr><td class="drag">⋮⋮</td><td><b>Courgette</b></td><td class="pt">Curgete</td><td class="n eur">12,00 € <span class="muted">/ h</span></td><td><span class="badge off">Masqué</span></td><td><span class="btn sm">Modifier</span></td></tr>
+          <tr><td class="drag">⋮⋮</td><td><b>Panais</b></td><td class="pt">Pastinaca</td><td class="n eur">12,00 € <span class="muted">/ h</span></td><td><span class="badge ok">Actif</span></td><td><span class="btn sm">Modifier</span></td></tr>
+          <tr><td class="drag">⋮⋮</td><td><b>Céleri branche</b></td><td class="pt">Aipo</td><td class="n eur">12,00 € <span class="muted">/ h</span></td><td><span class="badge ok">Actif</span></td><td><span class="btn sm">Modifier</span></td></tr>
+          <tr><td class="drag">⋮⋮</td><td><b>Brocoli</b></td><td class="pt">Brócolos</td><td class="n eur">12,00 € <span class="muted">/ h</span></td><td><span class="badge ok">Actif</span></td><td><span class="btn sm">Modifier</span></td></tr>
+        </tbody></table></div>
+      <p class="muted" style="font-size:.8rem">« Courgette » est montrée masquée pour l'exemple : un produit masqué disparaît de l'écran du chef, mais ses saisies passées restent dans les cumuls.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 4. SUPERVISION ================= -->
+<section class="scr" id="supervision">
+  <h2>4 · Supervision et paie (responsable)</h2>
+  <ul class="why">
+    <li>En haut, les chiffres clés de la période, dont le <b>montant total à payer</b>.</li>
+    <li>Le tableau « Paie par saisonnier » remplace l'ancien tableau des cumuls. On y trouve les heures de présence, ce qui est payé à la tâche et à l'heure, et le total en euros.</li>
+    <li>Les saisies du jour sont toujours affichées avant les cumuls. Elles indiquent aussi les horaires du matin et de l'après-midi.</li>
+    <li>L'export Excel aura 3 feuilles : <b>Paie</b> (une ligne par saisonnier), <b>Détail</b> (une ligne par jour et par saisonnier, avec les horaires) et <b>Tarifs</b> (les prix utilisés).</li>
+  </ul>
+  <div class="ask"><b>Suggestion à valider :</b> pour chaque saisonnier, comparer ce qu'il gagne à la tâche avec ses heures de présence × le SMIC horaire, et afficher une alerte s'il est en dessous. En France, un salarié payé à la tâche doit toucher au moins le SMIC. Exemple ci-dessous : la ligne SOUSA Paulo.</div>
+  <div class="desk">
+    <div class="chrome"><i></i><i></i><i></i><span>localhost · SCEA Guidal (version locale)</span></div>
+    <header class="brand"><div class="in"><svg class="logo"><use href="#radis"/></svg><div><div class="tag">Terroir &amp; Fraîcheur · depuis 1995</div><h1>SCEA Guidal</h1></div>
+      <div class="userbox"><div><div>Responsable</div><div class="role">Responsable</div></div><span class="btn-out">Partager</span><span class="btn-out">Déconnexion</span></div></div></header>
+    <nav class="tabs"><b>Saisie</b><b class="on">Supervision</b><b class="new">Saisonniers</b><b class="new">Produits et tarifs</b><b>Équipe</b></nav>
+    <div class="main stack">
+      <div class="row between"><h3 class="t">Tableau de bord</h3><div class="row"><span class="btn primary">Exporter vers Excel</span><span class="btn">CSV</span></div></div>
+      <div class="row"><div class="seg"><b>Jour</b><b>Semaine</b><b class="on">Mois</b></div><span class="btn sm">‹</span><strong style="min-width:150px;text-align:center">novembre 2026</strong><span class="btn sm">›</span><span class="btn sm ghost">Aujourd'hui</span></div>
+      <div class="tiles">
+        <div class="tile"><div class="v">478,5</div><div class="l">heures de présence</div></div>
+        <div class="tile"><div class="v">618</div><div class="l">colis</div></div>
+        <div class="tile"><div class="v">1 240</div><div class="l">unités · persil scotch</div></div>
+        <div class="tile"><div class="v">212</div><div class="l">heures à l'heure</div></div>
+        <div class="tile money"><div class="v">4 240,80 €</div><div class="l">montant total</div></div>
+      </div>
+
+      <div><h4>Saisies journalières</h4><div class="tscroll"><table>
+        <thead><tr><th>Date</th><th>Saisonnier</th><th>Matin</th><th>Après-midi</th><th class="n">Présence</th><th>Réalisé</th><th class="n">Montant</th><th>Saisi par</th><th></th></tr></thead>
+        <tbody>
+          <tr><td>mar. 17 nov.</td><td>COSTA Maria</td><td>07:00–12:00</td><td>13:30–17:00</td><td class="n">8 h 30</td><td>14 colis radis · 3 h binage</td><td class="n eur">71,00 €</td><td>Julien M.</td><td><span class="btn sm">Corriger</span></td></tr>
+          <tr><td>mar. 17 nov.</td><td>DUBOIS Marc</td><td>07:30–12:00</td><td>13:30–16:00</td><td class="n">7 h 00</td><td>7 h plantation</td><td class="n eur">84,00 €</td><td>Julien M.</td><td><span class="btn sm">Corriger</span></td></tr>
+          <tr><td>lun. 16 nov.</td><td>MARTINS Rui</td><td>07:00–12:00</td><td>13:00–17:00</td><td class="n">9 h 00</td><td>21 colis radis · 300 persil scotch</td><td class="n eur">97,50 €</td><td>Julien M.</td><td><span class="btn sm">Corriger</span></td></tr>
+        </tbody></table></div></div>
+
+      <div><h4>Paie par saisonnier</h4><div class="tscroll"><table>
+        <thead><tr><th>Saisonnier</th><th class="n">Jours</th><th class="n">Présence</th><th class="n">Colis</th><th class="n">Unités</th><th class="n">Heures à l'heure</th><th class="n">À la tâche</th><th class="n">À l'heure</th><th class="n">Total</th><th></th></tr></thead>
+        <tbody>
+          <tr><td>COSTA Maria</td><td class="n">12</td><td class="n">98,5</td><td class="n">164</td><td class="n zero">0</td><td class="n">31,0</td><td class="n">398,00 €</td><td class="n">372,00 €</td><td class="n eur">770,00 €</td><td></td></tr>
+          <tr><td>DUBOIS Marc</td><td class="n">11</td><td class="n">81,0</td><td class="n zero">0</td><td class="n zero">0</td><td class="n">81,0</td><td class="n zero">0,00 €</td><td class="n">972,00 €</td><td class="n eur">972,00 €</td><td></td></tr>
+          <tr><td>MARTINS Rui</td><td class="n">12</td><td class="n">96,0</td><td class="n">201</td><td class="n">1 240</td><td class="n">18,0</td><td class="n">688,50 €</td><td class="n">216,00 €</td><td class="n eur">904,50 €</td><td></td></tr>
+          <tr><td>PEREIRA Ana</td><td class="n">9</td><td class="n">72,5</td><td class="n">88</td><td class="n zero">0</td><td class="n">40,0</td><td class="n">210,00 €</td><td class="n">480,00 €</td><td class="n eur">690,00 €</td><td></td></tr>
+          <tr><td>SILVA João</td><td class="n">12</td><td class="n">99,0</td><td class="n">143</td><td class="n zero">0</td><td class="n">38,0</td><td class="n">347,50 €</td><td class="n">456,00 €</td><td class="n eur">803,50 €</td><td></td></tr>
+          <tr><td>SOUSA Paulo</td><td class="n">4</td><td class="n">31,5</td><td class="n">22</td><td class="n zero">0</td><td class="n">4,0</td><td class="n">52,80 €</td><td class="n">48,00 €</td><td class="n eur">100,80 €</td><td><span class="badge warn" title="Sous le SMIC pour 31,5 h de présence">⚠ sous le SMIC</span></td></tr>
+        </tbody>
+        <tfoot><tr><td>Total</td><td></td><td class="n">478,5</td><td class="n">618</td><td class="n">1 240</td><td class="n">212,0</td><td class="n">1 696,80 €</td><td class="n">2 544,00 €</td><td class="n">4 240,80 €</td><td></td></tr></tfoot>
+      </table></div></div>
+    </div>
+  </div>
+</section>
+</div>
+
+<script>
+/* Bouton FR | PT des maquettes de téléphone */
+document.querySelectorAll("[data-lang-scope]").forEach(scope=>{
+  scope.querySelectorAll("[data-pt]").forEach(el=>el.dataset.fr=el.textContent);
+  scope.querySelectorAll(".lang button").forEach(b=>b.addEventListener("click",()=>{
+    const l=b.dataset.l;
+    document.querySelectorAll("[data-lang-scope]").forEach(sc=>{
+      sc.querySelectorAll(".lang button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.l===l));
+      sc.querySelectorAll("[data-pt]").forEach(el=>el.textContent=el.dataset[l]);
+    });
+  }));
+});
+</script>
+</body>
+</html>

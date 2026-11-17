@@ -28,7 +28,9 @@ Contenu du dossier :
 2. Ouvrez le fichier `supabase/schema.sql` avec le Bloc-notes, copiez **tout** le contenu et collez-le.
 3. Cliquez sur **Run**. Le message attendu est *Success. No rows returned*.
 
-Cela crée les tables (saisonniers, légumes, récoltes, comptes), les droits d'accès, ainsi que Radis (botte) et Choux (colis).
+Cela crée les tables (saisonniers, produits, récoltes, comptes) et les droits d'accès.
+
+4. Faites de même avec `supabase/maj-01-identifiant.sql`, puis `supabase/maj-02-paie.sql`. Ce dernier ajoute les horaires, les modes de paie, les tarifs, le SMIC, ainsi que les 17 produits.
 
 ## Étape 3 — Régler la connexion
 
@@ -85,7 +87,7 @@ Sans terminal, on peut aussi modifier un fichier directement sur github.com (ic�
 
 1. Ouvrez https://philbass.github.io/scea-guidal-recoltes/ et connectez-vous avec **admin**.
 2. Onglet **Équipe** → **Modifier** sur votre compte : changez votre nom affiché et, si vous le souhaitez, votre identifiant de connexion (à la place de « admin »).
-3. Onglet **Saisonniers et légumes** : ajoutez vos saisonniers.
+3. Onglet **Saisonniers** : ajoutez vos saisonniers. Onglet **Produits et tarifs** : saisissez le prix de chaque produit et le SMIC horaire.
 4. Onglet **Équipe** : créez un compte pour chaque chef d'équipe (nom, identifiant, mot de passe, rôle « Chef d'équipe »).
 5. Testez avec un compte chef sur un téléphone : il ne doit voir que l'écran de saisie.
 
@@ -95,9 +97,20 @@ Certaines évolutions de l'app demandent d'ajouter une fonction dans Supabase. L
 
 | Fichier | Apporte | À exécuter si |
 |---|---|---|
-| `maj-01-identifiant.sql` | Changer l'identifiant de connexion d'un compte | Vous avez installé la base avant le 17/11/2026 |
+| `maj-01-identifiant.sql` | Changer l'identifiant de connexion d'un compte | Toujours, après `schema.sql` |
+| `maj-02-paie.sql` | Horaires matin et après-midi, paie au colis, à l'unité ou à l'heure, tarifs datés, SMIC, noms en portugais | Toujours, après `maj-01`. **Attention : efface les anciens produits et toutes les saisies de récolte déjà faites.** À exécuter juste avant de publier la version qui va avec. |
 
-Une installation neuve avec `schema.sql` contient déjà toutes les mises à jour.
+Exécutez les fichiers dans l'ordre de leur numéro.
+
+## Tester en local (mode démo)
+
+Pour essayer une nouvelle version sur l'ordinateur avant de la publier, sans toucher à la vraie base :
+
+1. Dans le dossier `outils`, clic droit sur `serveur-local.ps1` → **Exécuter avec PowerShell**. Laissez la fenêtre ouverte.
+2. Ouvrez **http://localhost:8080/?demo** dans le navigateur.
+3. Choisissez « responsable » ou « chef d'équipe ». Les données sont fictives et restent dans ce navigateur. Le bouton **Réinitialiser la démo** les remet à zéro.
+
+Sans `?demo` dans l'adresse, la version locale se connecte à la vraie base.
 
 ## Installer l'app sur le téléphone
 
@@ -115,7 +128,8 @@ L'app s'ouvre alors en plein écran avec l'icône du radis, et la personne reste
 | Saisir les récoltes | Oui, pour les 7 derniers jours | Oui, sans limite de date |
 | Voir le tableau de bord et exporter | Non | Oui |
 | Corriger ou supprimer une saisie | Non (il peut refaire la saisie du jour) | Oui |
-| Gérer saisonniers et légumes | Non | Oui |
+| Gérer saisonniers et produits | Non | Oui |
+| Voir les prix, le SMIC et les montants | Non | Oui |
 | Créer des comptes, changer les mots de passe | Non | Oui |
 
 Ces règles sont appliquées par la base de données elle-même, pas seulement par l'affichage.
