@@ -81,6 +81,8 @@ input,select{font:500 1rem var(--body);color:var(--fg);background:var(--surface)
 .badge.sun{background:var(--sun-bg);color:var(--sun)}
 .sun{color:var(--sun)!important;font-weight:700}
 input.sun{border-color:var(--sun);border-width:2px;background:var(--sun-bg)}
+input.err{border-color:var(--red);border-width:2px;background:var(--red-bg)}
+.req{color:var(--red);font-weight:700}
 tr.sun td{background:var(--sun-bg)}
 .dh .badge.sun{background:#FFA24C;color:#2a1600}
 .badge.role{background:var(--surface-2);color:var(--green-ink)}
@@ -276,7 +278,8 @@ const I18N={
   absent:"Absent",markAbsent:"Absent(e) ce matin",markAbsentAm:"Absent(e) cet après-midi",unAbsent:"Annuler l'absence",
   absentNote:"Personne notée absente : aucune production à saisir.",halfOf:h=>h==="matin"?"du matin":"de l'après-midi",
   errEmptyHalf:"Rien à enregistrer : saisissez les horaires, des quantités, ou notez la personne absente.",
-  clear:"Effacer la saisie",clearConfirm:"Confirmer : tout effacer",cleared:"Saisie effacée"},
+  clear:"Effacer la saisie",clearConfirm:"Confirmer : tout effacer",cleared:"Saisie effacée",
+  errHours:"Horaires obligatoires : indiquez l'heure de début et l'heure de fin, ou notez la personne absente.",required:"obligatoire"},
  pt:{saisie:"Registo",saisieJour:"Registo do dia",nSaisis:(d,n)=>`${d} / ${n} registados`,date:"Data",search:"Procurar trabalhador",searchPh:"Nome ou apelido",
   done:"✓ Registado",todo:"Por registar",back:"← Voltar à lista",already:"Já registado · validar substitui",horaires:"Horário",matin:"Manhã",am:"Tarde",
   debut:"Início",fin:"Fim",presence:"Presença",same:"Mesmo horário que o registo anterior",colis:"À caixa",unite:"À unidade",heure:"À hora",
@@ -290,7 +293,8 @@ const I18N={
   absent:"Ausente",markAbsent:"Ausente esta manhã",markAbsentAm:"Ausente esta tarde",unAbsent:"Anular a ausência",
   absentNote:"Pessoa marcada como ausente: nenhuma produção a registar.",halfOf:h=>h==="matin"?"da manhã":"da tarde",
   errEmptyHalf:"Nada a guardar: indique o horário, quantidades, ou marque a pessoa ausente.",
-  clear:"Apagar o registo",clearConfirm:"Confirmar: apagar tudo",cleared:"Registo apagado"}
+  clear:"Apagar o registo",clearConfirm:"Confirmar: apagar tudo",cleared:"Registo apagado",
+  errHours:"Horário obrigatório: indique a hora de início e a hora de fim, ou marque a pessoa ausente.",required:"obrigatório"}
 };
 
 const S={session:null,profil:null,booting:true,loginErr:"",loginBusy:false,
@@ -642,8 +646,9 @@ function viewSaisie(){
       <div class="row"><h2>${esc(p?fullName(p):"")}</h2>${halfState(entries[S.selected],H)?`<span class="badge ok">${T("already")}</span>`:""}</div>
       <div class="row between">${halfSeg()}<button type="button" class="btn sm ${S.absent?"primary":"danger"}" data-act="absent">${S.absent?T("unAbsent"):(H==="matin"?T("markAbsent"):T("markAbsentAm"))}</button></div>
       ${S.absent?`<div class="notice warn"><b>${T("absent")} · ${esc(lab)}</b><br>${T("absentNote")}</div>`:`
-      <div class="sec"><h4>${T("horaires")} · ${esc(lab)}</h4><span class="ln"></span></div>
+      <div class="sec"><h4>${T("horaires")} · ${esc(lab)} <span class="req">*</span></h4><span class="ln"></span><span class="chip req">${T("required")}</span></div>
       <div class="hours"><div class="hcard"><div class="hd">${H==="matin"?"☀":"◐"} ${esc(lab)}</div><div class="tm">${timeInput("d",lab+" "+T("debut"))}<span>–</span>${timeInput("f",lab+" "+T("fin"))}</div></div></div>
+      <div class="notice err" id="h-msg" role="alert" hidden></div>
       <div class="total"><span>${T("presence")}</span>${S.lastH[H]?`<button type="button" class="btn sm" data-act="same-h">${T("same")}</button>`:""}<strong id="pres-tot">${fmtH(span(S.hd.d,S.hd.f))}</strong></div>
       ${legs.length?secs:`<div class="notice">${T("noLegs")}</div>`}
       <div id="meter">${meterHtml()}</div>`}
@@ -947,7 +952,7 @@ function openEdit(date,sid){
     d.querySelectorAll("[data-eq]").forEach(i=>{const [H,k]=i.dataset.eq.split("|");data[H].q[k]=Math.max(0,Number(i.value)||0)});
     d.querySelectorAll("[data-eh]").forEach(i=>{const [H,k]=i.dataset.eh.split("|");data[H].hd[k]=i.value});
     d.querySelectorAll("[data-ex]").forEach(i=>{data[i.dataset.ex].absent=i.checked});
-    for(const H of ["matin","am"]){const chk=checkHalf(data[H].hd,data[H].q,data[H].absent,"fr");if(chk)return toast((H==="matin"?"Matin : ":"Après-midi : ")+chk,true)}
+    for(const H of ["matin","am"]){const chk=checkHalf(data[H].hd,data[H].q,data[H].absent,"fr",false);if(chk)return toast((H==="matin"?"Matin : ":"Après-midi : ")+chk,true)}
     for(const H of ["matin","am"]){const x=data[H];
       const {error}=await sb.rpc("enregistrer_demi_journee",{p_date:date,p_saisonnier:Number(sid),p_periode:H,p_debut:x.hd.d||null,p_fin:x.hd.f||null,p_absent:x.absent,p_quantites:x.q});
       if(error)return toast(errMsg(error),true)}
@@ -1019,9 +1024,13 @@ function printFiche(sid){
 }
 
 /* contrôle des horaires (renvoie un message d'erreur ou rien) */
-function checkHalf(hd,q,absent,lang){
+/* contrôle d'une demi-journée. Les horaires sont obligatoires, sauf absence.
+   required = true pour la saisie du chef ; à la correction, seulement si des quantités sont saisies. */
+function checkHalf(hd,q,absent,lang,required){
   if(absent)return "";
   const t=k=>I18N[lang][k];
+  const hasQ=Object.values(q).some(v=>v>0);
+  if((required||hasQ)&&(!hd.d||!hd.f))return t("errHours");
   if(!!hd.d!==!!hd.f)return t("errPair");
   if(hd.d&&tmin(hd.f)<=tmin(hd.d))return t("errOrder");
   let hh=0;for(const [k,v] of Object.entries(q)){const l=legById(k);if(l&&l.mode==="heure")hh+=v}
@@ -1189,7 +1198,12 @@ document.addEventListener("click",async e=>{
       const n=personName(S.selected);S.selected=null;toast(T("cleared")+" · "+n);render();loadDay();if(isResp()){loadRange();loadMois()}window.scrollTo(0,0);break}
     case "validate":{
       const q={};for(const l of activeLegumes())q[l.id]=Math.max(0,Number(S.draft[l.id])||0);
-      const hd=S.hd,H=S.shalf;const chk=checkHalf(hd,q,S.absent,S.lang);if(chk)return toast(chk,true);
+      const hd=S.hd,H=S.shalf;const chk=checkHalf(hd,q,S.absent,S.lang,true);
+      if(chk){
+        if(chk===T("errHours")){let first=null;for(const k of ["d","f"]){const i=document.getElementById("h-"+k);if(i&&!i.value){i.classList.add("err");first=first||i}}
+          const m=document.getElementById("h-msg");if(m){m.textContent=chk;m.hidden=false}
+          if(first){first.scrollIntoView({block:"center"});first.focus()}}
+        return toast(chk,true)}
       const ex=halfState((S.day||{})[S.selected],H);
       if(!ex&&!S.absent&&!span(hd.d,hd.f)&&!Object.values(q).some(v=>v>0))return toast(T("errEmptyHalf"),true);
       t.disabled=true;t.textContent=T("sending");
@@ -1209,13 +1223,13 @@ document.addEventListener("input",e=>{
   if(t.id==="f-search"){S.search=t.value;render()}
   else if(t.id==="f-ssearch"){S.sSearch=t.value;render()}
   else if(t.dataset&&t.dataset.q){S.draft[t.dataset.q]=t.value;updMeter()}
-  else if(t.dataset&&t.dataset.h){S.hd[t.dataset.h]=t.value;updMeter()}
+  else if(t.dataset&&t.dataset.h){S.hd[t.dataset.h]=t.value;if(t.value){t.classList.remove("err");const m=document.getElementById("h-msg");if(m&&S.hd.d&&S.hd.f)m.hidden=true}updMeter()}
   else if(t.dataset&&"keep" in t.dataset){S.form[t.id]=t.value}
 });
 document.addEventListener("change",e=>{
   const t=e.target;
   if(t.id==="f-date"&&t.value){S.date=t.value;S.selected=null;S.day=null;loadDay()}
-  else if(t.dataset&&t.dataset.h){S.hd[t.dataset.h]=t.value;updMeter()}
+  else if(t.dataset&&t.dataset.h){S.hd[t.dataset.h]=t.value;if(t.value){t.classList.remove("err");const m=document.getElementById("h-msg");if(m&&S.hd.d&&S.hd.f)m.hidden=true}updMeter()}
   else if(t.dataset&&"keep" in t.dataset){S.form[t.id]=t.value;if(t.id==="l-mode"||t.id==="el-mode")render()}
 });
 document.addEventListener("submit",async e=>{
