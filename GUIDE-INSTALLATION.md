@@ -30,7 +30,7 @@ Contenu du dossier :
 
 Cela crée les tables (saisonniers, produits, récoltes, comptes) et les droits d'accès.
 
-4. Faites de même avec `supabase/maj-01-identifiant.sql`, `supabase/maj-02-paie.sql`, `supabase/maj-03-suppression-saisonnier.sql`, puis `supabase/maj-04-bottes-par-colis.sql`. Ce dernier ajoute les horaires, les modes de paie, les tarifs, le SMIC, ainsi que les 17 produits.
+4. Faites de même avec `supabase/maj-01-identifiant.sql`, `supabase/maj-02-paie.sql`, `supabase/maj-03-suppression-saisonnier.sql`, `supabase/maj-04-bottes-par-colis.sql`, puis `supabase/maj-05-demi-journees.sql`. Ce dernier ajoute les horaires, les modes de paie, les tarifs, le SMIC, ainsi que les 17 produits.
 
 ## Étape 3 — Régler la connexion
 
@@ -103,6 +103,8 @@ Certaines évolutions de l'app demandent d'ajouter une fonction dans Supabase. L
 | `maj-03-suppression-saisonnier.sql` | Supprimer définitivement un saisonnier, avec toutes ses saisies | Toujours, après `maj-02`. N'efface rien au moment de l'exécution. |
 
 | `maj-04-bottes-par-colis.sql` | Prix à la botte pour les produits au colis (Radis 25, Oignons 15, Ciboule 12, Persil 40 bottes par colis) | Toujours, après `maj-03`. N'efface rien. |
+
+| `maj-05-demi-journees.sql` | Saisie séparée du matin et de l'après-midi, absences par demi-journée (les récoltes déjà saisies sont classées « matin ») | Toujours, après `maj-04`, **avant** de publier la version qui va avec. N'efface rien. |
 
 Exécutez les fichiers dans l'ordre de leur numéro.
 

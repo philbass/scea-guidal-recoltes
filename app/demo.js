@@ -35,21 +35,23 @@ function seed(){
       if(!s.actif||rnd()<0.12)continue;
       const short=s.id===6&&rnd()<0.6;
       const md=rnd()<0.5?"07:00":"07:30",ad=rnd()<0.5?"13:00":"13:30",af=short?"15:00":(rnd()<0.5?"17:00":"16:30");
-      db.presences.push({id:db._id++,date:ds,saisonnier_id:s.id,matin_debut:md,matin_fin:"12:00",am_debut:ad,am_fin:af,saisi_par:"demo-chef",corrige_par:null});
-      const add=(l,q)=>db.recoltes.push({id:db._id++,date:ds,saisonnier_id:s.id,legume_id:l,quantite:q,saisi_par:"demo-chef",corrige_par:null});
+      const xa=rnd()<0.06; /* absent l'après-midi de temps en temps */
+      db.presences.push({id:db._id++,date:ds,saisonnier_id:s.id,matin_debut:md,matin_fin:"12:00",am_debut:xa?null:ad,am_fin:xa?null:af,matin_absent:false,am_absent:xa,saisi_par:"demo-chef",corrige_par:null});
+      const add=(l,q,periode)=>db.recoltes.push({id:db._id++,date:ds,saisonnier_id:s.id,legume_id:l,quantite:q,periode,saisi_par:"demo-chef",corrige_par:null});
       const mins=t=>{const [h,m]=t.split(":").map(Number);return h*60+m};
-      if(s.id===2){add(8,(mins("12:00")-mins(md)+mins(af)-mins(ad))/60);continue}
-      if(short){add(1,Math.round(4+rnd()*4));continue}
-      add([1,1,2,3,4,5][Math.floor(rnd()*6)],Math.round(13+rnd()*8));
-      if(s.id===3)add(6,Math.round(80+rnd()*60));
-      if(rnd()<0.6)add([7,9,10,15,16][Math.floor(rnd()*5)],[2,2.5,3][Math.floor(rnd()*3)]);
+      if(s.id===2){add(8,(mins("12:00")-mins(md))/60,"matin");if(!xa)add(8,(mins(af)-mins(ad))/60,"am");continue}
+      if(short){add(1,Math.round(2+rnd()*2),"matin");if(!xa)add(1,Math.round(2+rnd()*2),"am");continue}
+      add([1,1,2,3,4,5][Math.floor(rnd()*6)],Math.round(8+rnd()*4),"matin");
+      if(!xa)add([1,1,2,3,4,5][Math.floor(rnd()*6)],Math.round(5+rnd()*4),"am");
+      if(s.id===3)add(6,Math.round(80+rnd()*60),"matin");
+      if(!xa&&rnd()<0.6)add([7,9,10,15,16][Math.floor(rnd()*5)],[2,2.5,3][Math.floor(rnd()*3)],"am");
     }
   }
   return db;
 }
 let db;
 try{db=JSON.parse(localStorage.getItem(KEY))}catch(e){}
-if(!db||!db.presences||!db.legumes.length||db.legumes[0].bottes_par_colis==null)db=seed();
+if(!db||!db.presences||!db.legumes.length||db.legumes[0].bottes_par_colis==null||(db.recoltes[0]&&db.recoltes[0].periode==null))db=seed();
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){}};
 save();
 
@@ -126,6 +128,26 @@ class Q{
   }
 }
 
+/* imite enregistrer_demi_journee de maj-05 */
+function demiJournee({p_date,p_saisonnier,p_periode,p_debut,p_fin,p_absent,p_quantites}){
+  if(!chefDateOk("recoltes",p_date))return err("new row violates row-level security policy");
+  const abs=!!p_absent,sid=Number(p_saisonnier);
+  const same=r=>r.date===p_date&&r.saisonnier_id==sid&&r.periode===p_periode;
+  for(const [k,v] of Object.entries(p_quantites||{})){
+    const ex=db.recoltes.find(r=>same(r)&&r.legume_id==k);
+    if(Number(v)>0&&!abs){if(ex){if(Number(ex.quantite)!==Number(v)){const old={...ex};ex.quantite=Number(v);stamp("recoltes",ex,false,old)}}
+      else{const row={id:db._id++,date:p_date,saisonnier_id:sid,legume_id:Number(k),quantite:Number(v),periode:p_periode};stamp("recoltes",row,true);db.recoltes.push(row)}}
+    else if(ex)db.recoltes=db.recoltes.filter(r=>r!==ex);
+  }
+  if(abs)db.recoltes=db.recoltes.filter(r=>!same(r));
+  let pr=db.presences.find(r=>r.date===p_date&&r.saisonnier_id==sid);
+  if(!pr){pr={id:db._id++,date:p_date,saisonnier_id:sid,matin_debut:null,matin_fin:null,am_debut:null,am_fin:null,matin_absent:false,am_absent:false};stamp("presences",pr,true);db.presences.push(pr)}
+  const d=abs?null:(p_debut||null),f=abs?null:(p_fin||null);
+  const vals=p_periode==="matin"?{matin_debut:d,matin_fin:f,matin_absent:abs}:{am_debut:d,am_fin:f,am_absent:abs};
+  if(Object.entries(vals).some(([k,v])=>pr[k]!==v)){const old={...pr};Object.assign(pr,vals);stamp("presences",pr,false,old)}
+  if(!pr.matin_debut&&!pr.am_debut&&!pr.matin_absent&&!pr.am_absent)db.presences=db.presences.filter(r=>r!==pr);
+  save();return {data:null,error:null};
+}
 function journee({p_date,p_saisonnier,p_quantites,p_horaires}){
   if(!chefDateOk("recoltes",p_date))return err("new row violates row-level security policy");
   for(const [k,v] of Object.entries(p_quantites||{})){
@@ -150,6 +172,7 @@ window.GUIDAL_DEMO={
   from:t=>new Q(t),
   rpc:async(name,args)=>{await new Promise(r=>setTimeout(r,80));
     if(name==="enregistrer_journee")return journee(args);
+    if(name==="enregistrer_demi_journee")return demiJournee(args);
     if(role()!=="responsable")return err("Réservé au responsable");
     if(name==="changer_identifiant"){const p=db.profils.find(x=>x.id===args.p_user);if(p){p.identifiant=args.p_ident;save()}return {data:null,error:null}}
     return {data:null,error:null}},
