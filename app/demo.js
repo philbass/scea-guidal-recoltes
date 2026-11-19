@@ -26,7 +26,7 @@ function seed(){
   const now=new Date(),y=now.getFullYear(),m=now.getMonth();
   const start=iso(new Date(y,m-1,1));
   const prix={1:0.28,2:0.43,3:0.43,4:0.5,5:0.15,6:0.35}; /* au colis : prix d'une botte */
-  for(let id=1;id<=17;id++)db.tarifs.push({id:db._id++,legume_id:id,prix:prix[id]||12,depuis:start});
+  for(let id=1;id<=17;id++)db.tarifs.push({id:db._id++,legume_id:id,prix:prix[id]||12,depuis:start,bottes_par_colis:[25,15,15,12,40][id-1]||1});
   db.smic.push({depuis:start,taux:12});
   for(let d=new Date(y,m-1,1);d<=now;d.setDate(d.getDate()+1)){
     if(d.getDay()===0||d.getDay()===6)continue;
@@ -52,6 +52,8 @@ function seed(){
 let db;
 try{db=JSON.parse(localStorage.getItem(KEY))}catch(e){}
 if(!db||!db.presences||!db.legumes.length||db.legumes[0].bottes_par_colis==null||(db.recoltes[0]&&db.recoltes[0].periode==null))db=seed();
+/* imite maj-06 : bottes par colis datées dans les tarifs */
+for(const t of db.tarifs)if(t.bottes_par_colis==null){const l=db.legumes.find(x=>x.id==t.legume_id);t.bottes_par_colis=l&&l.mode==="colis"?l.bottes_par_colis:1}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){}};
 save();
 
@@ -128,9 +130,26 @@ class Q{
   }
 }
 
-/* imite enregistrer_demi_journee de maj-05 */
-function demiJournee({p_date,p_saisonnier,p_periode,p_debut,p_fin,p_absent,p_quantites}){
+/* imite enregistrer_demi_journee (maj-05, contrôles ajoutés par maj-06) */
+const mins=t=>{if(!t)return null;const [h,m]=String(t).slice(0,5).split(":").map(Number);return h*60+m};
+function checkDemi({p_date,p_periode,p_debut,p_fin,p_absent,p_quantites}){
+  if(p_periode!=="matin"&&p_periode!=="am")return "Période invalide";
+  if(p_date>todayIso())return "Impossible d'enregistrer une saisie à une date future";
+  if(p_absent)return null;
+  const qs=Object.entries(p_quantites||{}).map(([k,v])=>[k,Number(v)]);
+  if(qs.some(([,v])=>v<0))return "Une quantité négative est impossible";
+  const d=mins(p_debut),f=mins(p_fin);
+  if(qs.some(([,v])=>v>0)&&(d==null||f==null))return "Horaires obligatoires pour enregistrer des quantités";
+  if((d==null)!==(f==null))return "Horaires incomplets";
+  if(d!=null&&f<=d)return "L'heure de fin doit être après l'heure de début";
+  const hh=qs.reduce((s,[k,v])=>{const l=db.legumes.find(x=>x.id==k);return s+(l&&l.mode==="heure"&&v>0?v:0)},0);
+  if(d!=null&&hh>(f-d)/60+1e-9)return "Les heures à l'heure dépassent la présence";
+  return null;
+}
+function demiJournee(a){
+  const {p_date,p_saisonnier,p_periode,p_debut,p_fin,p_absent,p_quantites}=a;
   if(!chefDateOk("recoltes",p_date))return err("new row violates row-level security policy");
+  const c=checkDemi(a);if(c)return err(c);
   const abs=!!p_absent,sid=Number(p_saisonnier);
   const same=r=>r.date===p_date&&r.saisonnier_id==sid&&r.periode===p_periode;
   for(const [k,v] of Object.entries(p_quantites||{})){
@@ -148,20 +167,19 @@ function demiJournee({p_date,p_saisonnier,p_periode,p_debut,p_fin,p_absent,p_qua
   if(!pr.matin_debut&&!pr.am_debut&&!pr.matin_absent&&!pr.am_absent)db.presences=db.presences.filter(r=>r!==pr);
   save();return {data:null,error:null};
 }
-function journee({p_date,p_saisonnier,p_quantites,p_horaires}){
-  if(!chefDateOk("recoltes",p_date))return err("new row violates row-level security policy");
-  for(const [k,v] of Object.entries(p_quantites||{})){
-    const ex=db.recoltes.find(r=>r.date===p_date&&r.saisonnier_id==p_saisonnier&&r.legume_id==k);
-    if(Number(v)>0){if(ex){if(Number(ex.quantite)!==Number(v)){const old={...ex};ex.quantite=Number(v);stamp("recoltes",ex,false,old)}}
-      else{const row={id:db._id++,date:p_date,saisonnier_id:Number(p_saisonnier),legume_id:Number(k),quantite:Number(v)};stamp("recoltes",row,true);db.recoltes.push(row)}}
-    else if(ex)db.recoltes=db.recoltes.filter(r=>r!==ex);
-  }
-  const h=p_horaires||{};const v=k=>h[k]||null;
-  const ex=db.presences.find(r=>r.date===p_date&&r.saisonnier_id==p_saisonnier);
-  if(!v("matin_debut")&&!v("matin_fin")&&!v("am_debut")&&!v("am_fin")){if(ex)db.presences=db.presences.filter(r=>r!==ex)}
-  else{const vals={matin_debut:v("matin_debut"),matin_fin:v("matin_fin"),am_debut:v("am_debut"),am_fin:v("am_fin")};
-    if(ex){if(JSON.stringify([ex.matin_debut,ex.matin_fin,ex.am_debut,ex.am_fin])!==JSON.stringify(Object.values(vals))){const old={...ex};Object.assign(ex,vals);stamp("presences",ex,false,old)}}
-    else{const row={id:db._id++,date:p_date,saisonnier_id:Number(p_saisonnier),...vals};stamp("presences",row,true);db.presences.push(row)}}
+/* imite corriger_journee (maj-06) : matin et après-midi ensemble, tout ou rien */
+function corrigerJournee({p_date,p_saisonnier,p_matin,p_am}){
+  if(role()!=="responsable")return err("Réservé au responsable");
+  const args=[["matin",p_matin],["am",p_am]].map(([H,x])=>({p_date,p_saisonnier,p_periode:H,p_debut:x.debut,p_fin:x.fin,p_absent:!!x.absent,p_quantites:x.quantites||{}}));
+  for(const x of args){const c=checkDemi(x);if(c)return err(c)}
+  for(const x of args)demiJournee(x);
+  return {data:null,error:null};
+}
+/* imite effacer_journee (maj-06) */
+function effacerJournee({p_date,p_saisonnier}){
+  if(role()!=="responsable")return err("Réservé au responsable");
+  db.recoltes=db.recoltes.filter(r=>!(r.date===p_date&&r.saisonnier_id==p_saisonnier));
+  db.presences=db.presences.filter(r=>!(r.date===p_date&&r.saisonnier_id==p_saisonnier));
   save();return {data:null,error:null};
 }
 
@@ -171,8 +189,9 @@ window.GUIDAL_DEMO={
   reset(){try{localStorage.removeItem(KEY)}catch(e){}location.reload()},
   from:t=>new Q(t),
   rpc:async(name,args)=>{await new Promise(r=>setTimeout(r,80));
-    if(name==="enregistrer_journee")return journee(args);
     if(name==="enregistrer_demi_journee")return demiJournee(args);
+    if(name==="corriger_journee")return corrigerJournee(args);
+    if(name==="effacer_journee")return effacerJournee(args);
     if(role()!=="responsable")return err("Réservé au responsable");
     if(name==="changer_identifiant"){const p=db.profils.find(x=>x.id===args.p_user);if(p){p.identifiant=args.p_ident;save()}return {data:null,error:null}}
     return {data:null,error:null}},

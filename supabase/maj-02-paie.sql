@@ -6,9 +6,20 @@
 --  ATTENTION : efface tous les anciens produits (Radis en botte,
 --  Choux en colis) ET toutes les saisies de récolte déjà faites.
 --  Les saisonniers et les comptes sont conservés.
+--
+--  PROTECTION (ajoutée le 19/11/2026) : si cette mise à jour a déjà été
+--  exécutée, le fichier s'arrête tout de suite avec un message, SANS RIEN
+--  EFFACER. On ne peut donc plus perdre les saisies en la relançant par erreur.
 -- =====================================================================
 
 begin;
+
+do $$ begin
+  if exists (select 1 from information_schema.columns
+              where table_schema = 'public' and table_name = 'legumes' and column_name = 'mode') then
+    raise exception 'maj-02 a déjà été exécutée : ne la relancez pas (elle effacerait toutes les saisies). Rien n''a été modifié.';
+  end if;
+end $$;
 
 -- ---------------------------------------------------------------------
 -- 1. Effacer les saisies d'essai et les anciens produits

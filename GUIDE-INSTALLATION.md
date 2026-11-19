@@ -30,14 +30,14 @@ Contenu du dossier :
 
 Cela crée les tables (saisonniers, produits, récoltes, comptes) et les droits d'accès.
 
-4. Faites de même avec `supabase/maj-01-identifiant.sql`, `supabase/maj-02-paie.sql`, `supabase/maj-03-suppression-saisonnier.sql`, `supabase/maj-04-bottes-par-colis.sql`, puis `supabase/maj-05-demi-journees.sql`. Ce dernier ajoute les horaires, les modes de paie, les tarifs, le SMIC, ainsi que les 17 produits.
+4. Faites de même, dans l'ordre, avec `supabase/maj-01-identifiant.sql`, `supabase/maj-02-paie.sql` (horaires, modes de paie, tarifs, SMIC et les 17 produits), `supabase/maj-03-suppression-saisonnier.sql`, `supabase/maj-04-bottes-par-colis.sql`, `supabase/maj-05-demi-journees.sql`, puis `supabase/maj-06-securite-et-controles.sql`.
 
 ## Étape 3 — Régler la connexion
 
 Menu **Authentication** → **Sign In / Providers** (ou **Providers** → **Email**) :
 
 - **Enable Email provider** : activé
-- **Allow new users to sign up** : activé (sert à la création des comptes depuis l'app ; un compte non invité par le responsable n'a accès à rien)
+- **Allow new users to sign up** : activé (sert à la création des comptes depuis l'app). Depuis `maj-06`, la base refuse toute inscription qui n'a pas été préparée depuis l'onglet **Équipe** dans les 15 minutes précédentes.
 - **Confirm email** : **désactivé**. Les identifiants ne sont pas de vraies adresses e-mail, aucune confirmation ne peut donc être reçue.
 
 Cliquez sur **Save**.
@@ -106,7 +106,11 @@ Certaines évolutions de l'app demandent d'ajouter une fonction dans Supabase. L
 
 | `maj-05-demi-journees.sql` | Saisie séparée du matin et de l'après-midi, absences par demi-journée (les récoltes déjà saisies sont classées « matin ») | Toujours, après `maj-04`, **avant** de publier la version qui va avec. N'efface rien. |
 
+| `maj-06-securite-et-controles.sql` | Comptes créés seulement depuis une invitation récente de l'onglet Équipe ; « aujourd'hui » calculé à l'heure de Paris ; contrôles des saisies par la base (pas de date future, pas de quantité négative, horaires obligatoires) ; correction d'une journée en une seule opération ; nombre de bottes par colis daté avec le prix (le changer ne modifie plus la paie passée) | Toujours, après `maj-05`. N'efface aucune saisie (supprime seulement les invitations de compte restées en attente). L'app fonctionne avant et après : à exécuter dès que possible. Peut être relancé sans risque. |
+
 Exécutez les fichiers dans l'ordre de leur numéro.
+
+`maj-02` est protégé : s'il a déjà été exécuté, il s'arrête avec un message sans rien effacer. Avant chaque mise à jour de la base, faites par précaution un export Excel du mois en cours (onglet **Supervision**).
 
 ## Tester en local (mode démo)
 
@@ -131,7 +135,7 @@ L'app s'ouvre alors en plein écran avec l'icône du radis, et la personne reste
 
 | | Chef d'équipe | Responsable |
 |---|---|---|
-| Saisir les récoltes | Oui, pour les 7 derniers jours | Oui, sans limite de date |
+| Saisir les récoltes | Oui, aujourd'hui et les 7 jours précédents (heure de Paris) | Oui, jusqu'à aujourd'hui (pas de date future) |
 | Voir le tableau de bord et exporter | Non | Oui |
 | Corriger ou supprimer une saisie | Non (il peut refaire la saisie du jour) | Oui |
 | Gérer saisonniers et produits | Non | Oui |
@@ -147,9 +151,11 @@ Ces règles sont appliquées par la base de données elle-même, pas seulement p
 | « Configuration à terminer » | `config.js` n'est pas rempli (étape 5) |
 | « Compte pas encore confirmé » | Désactiver **Confirm email** (étape 3) |
 | « Compte non activé » | Le compte a été désactivé dans **Équipe**, ou il a été créé dans Supabase sans invitation. Recréez-le depuis l'onglet Équipe. |
+| « Pas de connexion » au démarrage | Le téléphone n'a pas de réseau. Ce n'est pas un problème de compte : touchez **Réessayer** une fois le réseau revenu. |
+| « La base a refusé la création du compte » | L'invitation a expiré (plus de 15 minutes) : recréez simplement le compte depuis l'onglet Équipe. |
 | « Identifiant ou mot de passe incorrect » | Le responsable peut changer le mot de passe dans **Équipe** → **Mot de passe** |
 | « La base doit être mise à jour » | Exécuter le fichier `supabase/maj-…sql` indiqué (voir « Mises à jour de la base de données ») |
 | L'app affiche encore l'ancienne version | Attendre la fin de la publication (onglet **Actions** sur GitHub), puis recharger la page |
-| Les nouvelles saisies n'apparaissent pas toutes seules | Supabase → **Database** → **Publications** → `supabase_realtime` : vérifier que `recoltes` est coché |
+| Les nouvelles saisies n'apparaissent pas toutes seules | Supabase → **Database** → **Publications** → `supabase_realtime` : vérifier que `recoltes` et `presences` sont cochés |
 
 **Projet gratuit Supabase** : il se met en pause après 7 jours sans aucune utilisation. Pendant la saison, l'usage quotidien l'évite. Après une longue pause, il suffit de le relancer depuis le tableau de bord Supabase (**Restore project**).
