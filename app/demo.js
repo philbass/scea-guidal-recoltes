@@ -22,7 +22,7 @@ function seed(){
       ["Persil scotch","Salsa scotch","unite"],["Épluchage","Descasque","heure"],["Plantation","Plantação","heure"],["Binage","Sacha","heure"],["Chou-fleur","Couve-flor","heure"],
       ["Chou vert","Couve verde","heure"],["Chou blanc","Couve branca","heure"],["Chou rouge","Couve roxa","heure"],["Courgette","Curgete","heure"],["Panais","Pastinaca","heure"],
       ["Céleri branche","Aipo","heure"],["Brocoli","Brócolos","heure"]].map(([nom,nom_pt,mode],i)=>({id:i+1,nom,nom_pt,mode,actif:true,ordre:i+1,bottes_par_colis:[25,15,15,12,40][i]||1})),
-    tarifs:[],smic:[],recoltes:[],presences:[]};
+    tarifs:[],smic:[],recoltes:[],presences:[],journal_saisies:[]};
   const now=new Date(),y=now.getFullYear(),m=now.getMonth();
   const start=iso(new Date(y,m-1,1));
   const prix={1:0.28,2:0.43,3:0.43,4:0.5,5:0.15,6:0.35}; /* au colis : prix d'une botte */
@@ -52,6 +52,7 @@ function seed(){
 let db;
 try{db=JSON.parse(localStorage.getItem(KEY))}catch(e){}
 if(!db||!db.presences||!db.legumes.length||db.legumes[0].bottes_par_colis==null||(db.recoltes[0]&&db.recoltes[0].periode==null))db=seed();
+if(!db.journal_saisies)db.journal_saisies=[]; /* imite maj-07 */
 /* imite maj-06 : bottes par colis datées dans les tarifs */
 for(const t of db.tarifs)if(t.bottes_par_colis==null){const l=db.legumes.find(x=>x.id==t.legume_id);t.bottes_par_colis=l&&l.mode==="colis"?l.bottes_par_colis:1}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){}};
@@ -64,10 +65,16 @@ const role=()=>{const p=db.profils.find(x=>x.id===uid());return p&&p.actif?p.rol
 const err=m=>({data:null,error:{message:m}});
 const todayIso=()=>iso(new Date());
 const daysAgo=n=>{const d=new Date();d.setDate(d.getDate()-n);return iso(d)};
-const PRIVATE=["tarifs","smic","invitations"];
+const PRIVATE=["tarifs","smic","invitations","journal_saisies"];
+/* imite le journal de maj-07 */
+function jlog(table,action,before,after){
+  if(table!=="recoltes"&&table!=="presences")return;const r=after||before;
+  db.journal_saisies.push({id:db._id++,quand:new Date().toISOString(),par:uid(),table_nom:table,action,date:r.date,saisonnier_id:r.saisonnier_id,periode:r.periode||null,legume_id:r.legume_id||null,avant:before?{...before}:null,apres:after?{...after}:null});
+}
 
 function stamp(table,row,isNew,old){
   if(table!=="recoltes"&&table!=="presences")return;
+  jlog(table,isNew?"INSERT":"UPDATE",isNew?null:old,row);
   if(isNew){row.saisi_par=uid();row.corrige_par=null}
   else{row.saisi_par=old.saisi_par;row.corrige_par=uid()!==old.saisi_par?uid():old.corrige_par}
 }
@@ -82,7 +89,7 @@ class Q{
   eq(c,v){this.f.push(r=>String(r[c])===String(v));return this}
   gte(c,v){this.f.push(r=>r[c]>=v);return this}
   lte(c,v){this.f.push(r=>r[c]<=v);return this}
-  order(c){this.ord.push(c);return this}
+  order(c,o){this.ord.push([c,!(o&&o.ascending===false)]);return this}
   range(a,b){this.rng=[a,b];return this}
   maybeSingle(){this.one=true;return this}
   insert(p){this.op="insert";this.p=p;return this}
@@ -101,7 +108,7 @@ class Q{
       if(PRIVATE.includes(t)&&!isResp)out=[];
       if(t==="profils"&&!isResp)out=out.filter(r=>r.id===uid());
       if((t==="recoltes"||t==="presences")&&!isResp)out=out.filter(r=>r.date>=daysAgo(7));
-      out=out.slice().sort((a,b)=>{for(const c of this.ord){if(a[c]<b[c])return -1;if(a[c]>b[c])return 1}return 0});
+      out=out.slice().sort((a,b)=>{for(const [c,asc] of this.ord){const k=asc?1:-1;if(a[c]<b[c])return -k;if(a[c]>b[c])return k}return 0});
       if(this.rng)out=out.slice(this.rng[0],this.rng[1]+1);
       out=JSON.parse(JSON.stringify(out));
       return {data:this.one?(out[0]||null):out,error:null};
@@ -156,9 +163,9 @@ function demiJournee(a){
     const ex=db.recoltes.find(r=>same(r)&&r.legume_id==k);
     if(Number(v)>0&&!abs){if(ex){if(Number(ex.quantite)!==Number(v)){const old={...ex};ex.quantite=Number(v);stamp("recoltes",ex,false,old)}}
       else{const row={id:db._id++,date:p_date,saisonnier_id:sid,legume_id:Number(k),quantite:Number(v),periode:p_periode};stamp("recoltes",row,true);db.recoltes.push(row)}}
-    else if(ex)db.recoltes=db.recoltes.filter(r=>r!==ex);
+    else if(ex){jlog("recoltes","DELETE",ex,null);db.recoltes=db.recoltes.filter(r=>r!==ex)}
   }
-  if(abs)db.recoltes=db.recoltes.filter(r=>!same(r));
+  if(abs){db.recoltes.filter(same).forEach(r=>jlog("recoltes","DELETE",r,null));db.recoltes=db.recoltes.filter(r=>!same(r))}
   let pr=db.presences.find(r=>r.date===p_date&&r.saisonnier_id==sid);
   if(!pr){pr={id:db._id++,date:p_date,saisonnier_id:sid,matin_debut:null,matin_fin:null,am_debut:null,am_fin:null,matin_absent:false,am_absent:false};stamp("presences",pr,true);db.presences.push(pr)}
   const d=abs?null:(p_debut||null),f=abs?null:(p_fin||null);
@@ -178,8 +185,8 @@ function corrigerJournee({p_date,p_saisonnier,p_matin,p_am}){
 /* imite effacer_journee (maj-06) */
 function effacerJournee({p_date,p_saisonnier}){
   if(role()!=="responsable")return err("Réservé au responsable");
-  db.recoltes=db.recoltes.filter(r=>!(r.date===p_date&&r.saisonnier_id==p_saisonnier));
-  db.presences=db.presences.filter(r=>!(r.date===p_date&&r.saisonnier_id==p_saisonnier));
+  const hit=r=>r.date===p_date&&r.saisonnier_id==p_saisonnier;
+  for(const t of ["recoltes","presences"]){db[t].filter(hit).forEach(r=>jlog(t,"DELETE",r,null));db[t]=db[t].filter(r=>!hit(r))}
   save();return {data:null,error:null};
 }
 

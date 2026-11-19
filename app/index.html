@@ -201,6 +201,14 @@ dialog .db{padding:16px 18px;display:flex;flex-direction:column;gap:12px}
 .chk input{width:24px;height:24px;min-height:0;margin:0;accent-color:var(--red-btn)}
 .clearrow{display:flex;justify-content:flex-start}
 td .btn.sm,td .btn.ico{min-height:40px}
+/* supervision : cartes sur téléphone à la place du tableau */
+.cards{display:none;flex-direction:column;gap:10px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.card .hd{display:flex;justify-content:space-between;align-items:center;gap:10px;font-weight:700}
+.card .meta{font-size:.85rem;color:var(--muted)}
+@media (max-width:640px){.cards{display:flex}.tscroll.det{display:none}}
+.journal{font-size:.85rem;display:flex;flex-direction:column;gap:4px;max-height:220px;overflow:auto}
+.journal div{border-bottom:1px solid var(--line);padding:4px 0}
 @media (max-width:640px){
   .userbox{margin-left:0;width:100%;justify-content:space-between}
   .periodnav strong{min-width:0;flex:1}
@@ -261,8 +269,6 @@ td .btn.sm,td .btn.ico{min-height:40px}
 <script src="config.js"></script>
 <script>if(/[?&]demo\b/.test(location.search))document.write('<script src="demo.js"><\/script>');</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
 (function(){
 "use strict";
@@ -275,6 +281,10 @@ const MODES=["colis","unite","heure"];
 const MODE_LABEL={colis:"Au colis",unite:"À l'unité",heure:"À l'heure"};
 const MODE_UNIT={colis:"colis",unite:"unité",heure:"heure"};
 const CHEF_JOURS=7;
+/* bibliothèques chargées seulement quand on en a besoin (le chef ne télécharge jamais le module Excel) */
+const LIB={xlsx:"https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js",qr:"https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"};
+const libs={};
+function loadScript(url){return libs[url]||(libs[url]=new Promise((ok,ko)=>{const s=document.createElement("script");s.src=url;s.onload=()=>ok();s.onerror=()=>{delete libs[url];ko(new Error("Failed to fetch "+url))};document.head.appendChild(s)}))}
 const PRIX_ORIGINE="2000-01-01";
 
 /* ---------- textes de l'écran de saisie (français / portugais) ---------- */
@@ -302,7 +312,12 @@ const I18N={
   roleChef:"Chef d'équipe",roleResp:"Responsable",retired:"Saisonnier retiré",
   notToday:d=>`⚠ Saisie pour le ${d}, pas pour aujourd'hui`,newDay:"Nouvelle journée : la date est passée à aujourd'hui.",
   prefilled:"Horaires repris de la saisie précédente : vérifiez-les.",
-  switchHalf:h=>`La saisie ${h} n'est pas validée. Touchez à nouveau pour changer sans l'enregistrer.`},
+  switchHalf:h=>`La saisie ${h} n'est pas validée. Touchez à nouveau pour changer sans l'enregistrer.`,
+  offline:"Hors connexion : les saisies sont gardées sur ce téléphone et envoyées dès le retour du réseau.",
+  queued:"Pas de réseau : saisie gardée sur le téléphone. Elle sera envoyée automatiquement.",
+  pending:"En attente d'envoi",nPending:n=>`${n} saisie${n>1?"s":""} en attente d'envoi`,sendNow:"Envoyer maintenant",
+  queueSent:n=>`${n} saisie${n>1?"s":""} envoyée${n>1?"s":""}`,queueErr:"Refusée par le serveur",discard:"Supprimer",
+  restored:"Saisie en cours retrouvée."},
  pt:{saisie:"Registo",saisieJour:"Registo do dia",nSaisis:(d,n)=>`${d} / ${n} registados`,date:"Data",search:"Procurar trabalhador",searchPh:"Nome ou apelido",
   done:"✓ Registado",todo:"Por registar",back:"← Voltar à lista",already:"Já registado · validar substitui",horaires:"Horário",matin:"Manhã",am:"Tarde",
   debut:"Início",fin:"Fim",presence:"Presença",same:"Mesmo horário que o registo anterior",colis:"À caixa",unite:"À unidade",heure:"À hora",
@@ -326,14 +341,19 @@ const I18N={
   roleChef:"Chefe de equipa",roleResp:"Responsável",retired:"Trabalhador retirado",
   notToday:d=>`⚠ Registo para ${d}, não para hoje`,newDay:"Novo dia: a data passou para hoje.",
   prefilled:"Horário copiado do registo anterior: verifique.",
-  switchHalf:h=>`O registo ${h} não está validado. Toque outra vez para mudar sem guardar.`}
+  switchHalf:h=>`O registo ${h} não está validado. Toque outra vez para mudar sem guardar.`,
+  offline:"Sem ligação: os registos ficam guardados neste telemóvel e são enviados quando a rede voltar.",
+  queued:"Sem rede: registo guardado no telemóvel. Será enviado automaticamente.",
+  pending:"À espera de envio",nPending:n=>`${n} registo${n>1?"s":""} à espera de envio`,sendNow:"Enviar agora",
+  queueSent:n=>`${n} registo${n>1?"s":""} enviado${n>1?"s":""}`,queueErr:"Recusado pelo servidor",discard:"Apagar",
+  restored:"Registo em curso recuperado."}
 };
 
 const S={session:null,profil:null,booting:true,loginErr:"",loginBusy:false,
   saisonniers:[],legumes:[],profils:[],invitations:[],tarifs:[],smic:[],
   day:null,range:null,mois:null,
   view:"saisie",date:today(),dateAuto:true,search:"",selected:null,draft:{},hd:{d:"",f:""},absent:false,lastH:{},form:{},editCfg:null,
-  shalf:autoHalf(),shalfAuto:true,half:"tout",sending:false,netErr:false,prefilled:false,bigOk:"",halfOk:"",qOpen:false,
+  shalf:autoHalf(),shalfAuto:true,half:"tout",sending:false,netErr:false,offline:false,queue:[],prefilled:false,bigOk:"",halfOk:"",qOpen:false,
   period:"mois",anchor:today(),lang:"fr",sFilter:"actifs",sSearch:"",selS:null};
 let chan=null,reloadT=null,dayToken=0,rangeToken=0,moisToken=0;
 const SPLASH=document.getElementById("root").innerHTML;
@@ -461,6 +481,56 @@ function errMsg(e,lang){
   if(/Réservé|caractères|Identifiant invalide|existe déjà|introuvable|Invitation/.test(m))return m;
   return t("errGeneric")+m;
 }
+/* ---------- hors connexion : copies locales et file d'attente des saisies ---------- */
+const isNetErr=e=>/Failed to fetch|NetworkError|Load failed|network request failed|ERR_INTERNET|ERR_NETWORK/i.test((e&&(e.message||e.error_description))||String(e||""));
+const ckey=k=>"guidal.cache."+k+"."+((S.session&&S.session.user.id)||"");
+function cacheSet(k,v){store(ckey(k),JSON.stringify(v))}
+function cacheGet(k){try{return JSON.parse(load(ckey(k))||"null")}catch(e){return null}}
+const QKEY="guidal.attente";
+function queueAll(){try{return JSON.parse(load(QKEY)||"[]")}catch(e){return []}}
+function queueMine(){const u=S.profil&&S.profil.id;return queueAll().filter(x=>x.uid===u)}
+function queueSave(q){store(QKEY,JSON.stringify(q));S.queue=queueMine()}
+/* une demi-journée gardée sur le téléphone remplace la précédente en attente pour la même personne */
+function enqueue(args){
+  const uid=S.profil.id,key=[uid,args.p_date,args.p_saisonnier,args.p_periode].join("|");
+  const q=queueAll().filter(x=>x.key!==key);q.push({key,uid,args,at:Date.now(),err:""});queueSave(q);
+}
+let flushing=false;
+async function flushQueue(){
+  if(flushing||!S.profil||!S.profil.actif)return;
+  const mine=queueMine().filter(x=>!x.err);if(!mine.length)return;
+  flushing=true;let sent=0,netDown=false;
+  for(const it of mine){
+    const {error}=await sb.rpc("enregistrer_demi_journee",it.args);
+    if(error&&isNetErr(error)){netDown=true;break}
+    const q=queueAll().filter(x=>x.key!==it.key);
+    if(error)q.push({...it,err:errMsg(error)});else sent++;
+    queueSave(q);
+  }
+  flushing=false;S.offline=netDown;
+  if(sent){toast(T("queueSent",sent));reloadData(true)}else render();
+}
+/* ajoute les saisies en attente à la journée affichée (badge « En attente d'envoi ») */
+function overlayQueue(m){
+  for(const it of queueMine()){const a=it.args;if(a.p_date!==S.date)continue;
+    const sid=String(a.p_saisonnier);const e=m[sid]||(m[sid]={date:a.p_date,sid,q:{},qm:{},qa:{},h:null,par:null,corr:null});
+    const H=a.p_periode,qq={};if(!a.p_absent)for(const [k,v] of Object.entries(a.p_quantites||{}))if(v>0)qq[k]=v;
+    if(H==="matin")e.qm=qq;else e.qa=qq;
+    e.q={};for(const src of [e.qm,e.qa])for(const [k,v] of Object.entries(src))e.q[k]=(e.q[k]||0)+v;
+    e.h={...(e.h||{})};if(H==="matin"){e.h.md=a.p_debut||"";e.h.mf=a.p_fin||"";e.h.xm=!!a.p_absent}else{e.h.ad=a.p_debut||"";e.h.af=a.p_fin||"";e.h.xa=!!a.p_absent}
+    e.pend={...(e.pend||{}),[H]:it.err||true};
+  }
+  return m;
+}
+window.addEventListener("online",()=>{S.offline=false;flushQueue()});
+window.addEventListener("offline",()=>{S.offline=true;render()});
+setInterval(()=>{if(navigator.onLine!==false)flushQueue()},30000);
+/* brouillon de la fiche ouverte : retrouvé si la page se recharge */
+const BKEY="guidal.brouillon";
+function saveBrouillon(){try{if(!S.selected||!S.profil)return sessionStorage.removeItem(BKEY);
+  sessionStorage.setItem(BKEY,JSON.stringify({uid:S.profil.id,date:S.date,sid:S.selected,shalf:S.shalf,draft:S.draft,hd:S.hd,absent:S.absent}))}catch(e){}}
+function takeBrouillon(){try{const b=JSON.parse(sessionStorage.getItem(BKEY)||"null");sessionStorage.removeItem(BKEY);return b}catch(e){return null}}
+let pendingRestore=null;
 const isMissingFn=(e,name)=>!!e&&(e.code==="PGRST202"||e.code==="42883"||/Could not find the function|does not exist/i.test(e.message||""))&&new RegExp(name).test(e.message||"");
 
 /* ---------- tarifs ----------
@@ -543,10 +613,12 @@ async function loadRef(){
   const [s,l]=await Promise.all([
     sb.from("saisonniers").select("id,nom,prenom,actif"),
     sb.from("legumes").select("*").order("ordre").order("id")]);
-  if(s.error)throw s.error; if(l.error)throw l.error;
+  const er=s.error||l.error;
+  if(er){const c=isNetErr(er)&&cacheGet("ref");if(!c)throw er;S.offline=true;s.data=c.s;l.data=c.l}
+  else cacheSet("ref",{s:s.data,l:l.data.map(x=>({id:x.id,nom:x.nom,nom_pt:x.nom_pt,mode:x.mode,actif:x.actif,ordre:x.ordre,bottes_par_colis:x.bottes_par_colis}))});
   S.saisonniers=s.data.map(x=>({...x,id:String(x.id)}));
   S.legumes=l.data.map(x=>({...x,id:String(x.id)})).sort((a,b)=>MODES.indexOf(a.mode)-MODES.indexOf(b.mode)||(a.ordre-b.ordre)||(a.id-b.id));
-  if(isResp()){
+  if(isResp()&&!er){
     const [t,m]=await Promise.all([sb.from("tarifs").select("*"),sb.from("smic").select("depuis,taux")]);
     if(t.error)throw t.error; if(m.error)throw m.error;
     if(t.data.length)HAS_TBPC="bottes_par_colis" in t.data[0];
@@ -558,8 +630,15 @@ async function loadRef(){
 async function loadDay(){
   const t=++dayToken;
   try{const ents=await fetchDays(S.date,S.date);if(t!==dayToken)return;
-    const m={};for(const e of ents)m[e.sid]=e;S.day=m;}
-  catch(e){if(t===dayToken){S.day={};toast(errMsg(e),true)}}
+    const m={};for(const e of ents)m[e.sid]=e;cacheSet("day."+S.date,ents);S.day=overlayQueue(m);S.offline=false}
+  catch(e){if(t===dayToken){
+    /* sans réseau : dernière copie de la journée gardée sur le téléphone */
+    const c=isNetErr(e)?cacheGet("day."+S.date):null;const m={};
+    if(isNetErr(e)){S.offline=true;if(c)for(const x of c)m[x.sid]=x}else toast(errMsg(e),true);
+    S.day=overlayQueue(m)}}
+  if(pendingRestore&&t===dayToken){const b=pendingRestore;pendingRestore=null;
+    if(b.date===S.date&&S.saisonniers.some(p=>p.id===b.sid&&p.actif)){S.selected=b.sid;S.shalf=b.shalf;S.shalfAuto=false;loadDraft();S.draft=b.draft||{};S.hd=b.hd||{d:"",f:""};S.absent=!!b.absent;S.prefilled=false;
+      try{history.pushState({g:"fiche"},"")}catch(e){}toast(T("restored"))}}
   render();
 }
 /* keep = mise à jour en arrière-plan (temps réel) : on garde l'affichage actuel jusqu'à l'arrivée des nouvelles données */
@@ -632,16 +711,21 @@ async function onSession(session){
   S.booting=true;render();
   const {data,error}=await sb.from("profils").select("*").eq("id",session.user.id).maybeSingle();
   /* erreur réseau : ce n'est pas un compte désactivé, on propose de réessayer */
-  if(error){await splashWait();S.netErr=true;S.booting=false;render();return}
+  let prof=data;
+  if(error){const c=isNetErr(error)&&cacheGet("profil");
+    if(!c||c.id!==session.user.id){await splashWait();S.netErr=true;S.booting=false;render();return}
+    prof=c;S.offline=true}
+  else if(data)cacheSet("profil",data);
   S.netErr=false;
-  if(!data||!data.actif){await splashWait();S.profil={blocked:true,actif:false,nom:data?data.nom:""};S.booting=false;render();return}
-  S.profil=data;
+  if(!prof||!prof.actif){await splashWait();S.profil={blocked:true,actif:false,nom:prof?prof.nom:""};S.booting=false;render();return}
+  S.profil=prof;S.queue=queueMine();
+  {const b=takeBrouillon();if(b&&b.uid===prof.id)pendingRestore=b}
   const v=load("guidal.view");S.view=(isResp()&&["saisie","supervision","saisonniers","produits","equipe"].includes(v))?v:"saisie";
   try{await loadRef();await loadProfils()}catch(e){toast(errMsg(e),true)}
   await splashWait();
   S.booting=false;
   lastToday=today();
-  loadDay();loadRange();loadMois();subscribe();render();
+  loadDay();loadRange();loadMois();subscribe();render();flushQueue();
 }
 /* Biométrie : le téléphone propose le mot de passe enregistré après Face ID / empreinte (Android : Credential Management ; iPhone : trousseau iCloud via le remplissage automatique) */
 let credTried=false;
@@ -762,7 +846,7 @@ function viewSaisie(){
     const H=S.shalf,lab=T(H);
     return `<div class="stack">
       <div class="row between"><button class="btn ghost" data-act="back">${T("back")}</button><span class="muted ${isSun(S.date)?"sun":""}">${esc(cap(fmtLong(S.date,loc)))}</span></div>
-      <div class="row"><h2>${esc(p?fullName(p):"")}</h2>${halfState(entries[S.selected],H)?`<span class="badge ok">${T("already")}</span>`:""}</div>
+      <div class="row"><h2>${esc(p?fullName(p):"")}</h2>${(entries[S.selected]||{}).pend&&entries[S.selected].pend[H]?`<span class="badge warn">${T("pending")}</span>`:halfState(entries[S.selected],H)?`<span class="badge ok">${T("already")}</span>`:""}</div>
       <div class="row between">${halfSeg()}<button type="button" class="btn sm ${S.absent?"primary":""}" data-act="absent">${S.absent?T("unAbsent"):(H==="matin"?T("markAbsent"):T("markAbsentAm"))}</button></div>
       ${S.absent?`<div class="notice warn"><b>${T("absent")} · ${esc(lab)}</b><br>${T("absentNote")}</div>`:`
       <div class="sec"><h4>${T("horaires")} · ${esc(lab)} <span class="req">*</span></h4><span class="ln"></span><span class="chip req">${T("required")}</span></div>
@@ -782,12 +866,18 @@ function viewSaisie(){
   const shown=people.filter(p=>!q||(p.nom+" "+p.prenom).toLowerCase().includes(q)||(p.prenom+" "+p.nom).toLowerCase().includes(q));
   const H=S.shalf;
   const done=people.filter(p=>halfState(entries[p.id],H)).length;
-  const list=shown.map(p=>{const st=halfState(entries[p.id],H);
+  const list=shown.map(p=>{const st=halfState(entries[p.id],H);const pend=entries[p.id]&&entries[p.id].pend&&entries[p.id].pend[H];
     const sum=st&&!st.absent?summary({q:st.q,h:{md:st.d,mf:st.f}},S.lang):"";
     return `<button class="person" data-pick="${p.id}">
       <span class="nm">${esc(fullName(p))}${sum?`<div class="sum">${esc(sum)}</div>`:""}</span>
-      ${!st?`<span class="badge todo">${T("todo")}</span>`:st.absent?`<span class="badge off">${T("absent")}</span>`:`<span class="badge ok">${T("done")}</span>`}</button>`}).join("");
+      ${pend?`<span class="badge warn">${pend===true?T("pending"):T("queueErr")}</span>`:!st?`<span class="badge todo">${T("todo")}</span>`:st.absent?`<span class="badge off">${T("absent")}</span>`:`<span class="badge ok">${T("done")}</span>`}</button>`}).join("");
+  const qq=S.queue||[];const qErr=qq.filter(x=>x.err);
+  const qBox=qq.length?`<div class="notice warn stack" style="gap:8px"><div class="row between"><b>${T("nPending",qq.length)}</b>${!S.offline?`<button class="btn sm" data-act="flush">${T("sendNow")}</button>`:""}</div>
+    ${qErr.map(x=>`<div class="row between" style="gap:8px"><span>${esc(personName(x.args.p_saisonnier))} · ${esc(fmtDay(x.args.p_date,T("locale")))} · ${esc(T(x.args.p_periode))} : ${esc(x.err)}</span><button class="btn sm danger" data-qdel="${esc(x.key)}">${T("discard")}</button></div>`).join("")}</div>`:"";
+
   return `<div class="stack">
+    ${S.offline?`<div class="notice warn">${T("offline")}</div>`:""}
+    ${qBox}
     <div class="row between"><h2>${T("saisieJour")}</h2><span class="muted">${S.day?T("nSaisis",done,people.length):""}</span></div>
     <div class="row" style="align-items:flex-end">
       <label class="f" style="flex:0 1 200px">${T("date")}<input type="date" id="f-date" class="${isSun(S.date)?"sun":""}" value="${S.date}" max="${today()}" ${minDate?`min="${minDate}"`:""}></label>
@@ -864,6 +954,14 @@ function viewSupervision(){
     det=A.rows.map(r=>`<tr><td>${esc(personName(r.sid))}</td><td class="n">${r.days.size}</td><td class="n">${r.pres?fmtH(r.pres):"—"}</td>
       <td>${absCell(r.abs)}</td><td class="realise" style="white-space:normal;min-width:220px">${realise(r.q)}</td><td class="n eur">${fmtE(r.total)}</td></tr>`).join("");
   }
+  /* cartes (téléphone) */
+  const cards=S.period==="jour"?A.ents.slice().sort((x,y)=>personName(x.sid).localeCompare(personName(y.sid),"fr")).map(e=>{const h=e.full.h||{};
+      return `<div class="card"><div class="hd"><span>${esc(personName(e.sid))}</span><span class="eur">${fmtE(e.v.total)}${e.v.missing?" ?":""}</span></div>
+      <div class="meta">${showM?"☀ "+(h.xm?"Absent":halfDay(h.md,h.mf)):""}${showM&&showA?" · ":""}${showA?"◐ "+(h.xa?"Absent":halfDay(h.ad,h.af)):""} · ${e.v.pres?fmtH(e.v.pres):"—"}</div>
+      <div>${realise(e.q)}</div>
+      <div class="row between"><span class="meta">${esc(parName(e.par))}${e.corr?" · corrigé par "+esc(parName(e.corr)):""}</span><button class="btn sm" data-edit="${e.date}|${e.sid}">Corriger</button></div></div>`}).join("")
+    :A.rows.map(r=>`<div class="card"><div class="hd"><span>${esc(personName(r.sid))}</span><span class="eur">${fmtE(r.total)}</span></div>
+      <div class="meta">${r.days.size} j · ${r.pres?fmtH(r.pres):"—"}${r.abs?" · "+r.abs+" demi-journée"+(r.abs>1?"s":"")+" d'absence":""}</div><div>${realise(r.q)}</div></div>`).join("");
   const detTitle=(S.period==="jour"?"Saisies du jour":S.period==="semaine"?"Saisies de la semaine":"Saisies du mois")+(S.half==="matin"?" · matin":S.half==="am"?" · après-midi":"");
   const paie=A.rows.map(r=>`<tr><td>${esc(personName(r.sid))}</td><td class="n">${r.days.size}</td><td class="n">${fmtH(r.pres)}</td>
     <td class="n ${r.colis?"":"zero"}">${fmtN(r.colis)}</td><td class="n ${r.unites?"":"zero"}">${fmtN(r.unites)}</td><td class="n ${r.hh?"":"zero"}">${r.hh?fmtH(r.hh):"0"}</td>
@@ -879,7 +977,7 @@ function viewSupervision(){
   return `<div class="stack">${head}
     ${notes.join("")}
     <div class="tiles">${tiles}</div>
-    <div><h3>${detTitle}</h3><div class="tscroll"><table><thead><tr>${detHead}</tr></thead><tbody>${det}</tbody></table></div>
+    <div><h3>${detTitle}</h3><div class="tscroll det"><table><thead><tr>${detHead}</tr></thead><tbody>${det}</tbody></table></div><div class="cards">${cards}</div>
       <p class="muted" style="font-size:.8rem;margin-top:6px">${S.period==="jour"?"Touchez le nom d'un saisonnier (ou « Corriger ») pour corriger sa saisie.":"Total de la période pour chaque saisonnier. Pour corriger une saisie, choisissez « Jour »."}</p></div>
     <div><h3>Paie par saisonnier</h3><div class="tscroll"><table><thead><tr><th>Saisonnier</th><th class="n">Jours</th><th class="n">Présence</th><th class="n">Colis</th><th class="n">Unités</th><th class="n">Heures</th><th class="n">À la tâche</th><th class="n">À l'heure</th><th class="n">Total</th><th></th><th>Fiche</th></tr></thead><tbody>${paie}</tbody><tfoot>${foot}</tfoot></table></div></div>
     <details id="qdet" ${S.qOpen?"open":""}><summary>Quantités par produit</summary><div class="tscroll"><table><thead><tr><th>Saisonnier</th>${th}</tr></thead><tbody>${qrows}</tbody><tfoot>${qfoot}</tfoot></table></div></details>
@@ -1064,8 +1162,10 @@ function openEdit(date,sid){
     <div class="row between">
       <button type="button" class="btn danger" id="e-del">Effacer la journée</button>
       <div class="row"><button type="button" class="btn" id="e-cancel">Annuler</button><button class="btn validate">Enregistrer</button></div>
-    </div></form>`;
+    </div>
+    <section id="e-journal" hidden><h3 style="margin:0">Historique des modifications</h3><div class="journal" id="e-jl"></div></section></form>`;
   showDlg(d);
+  loadJournal(date,sid);
   for(const id of ["#e-cancel","#e-cancel2","#e-x"])d.querySelector(id).onclick=()=>d.close();
   const busy=on=>d.querySelectorAll("button").forEach(b=>b.disabled=on);
   const del=d.querySelector("#e-del");
@@ -1103,6 +1203,25 @@ function openEdit(date,sid){
     if(error){busy(false);return toast(errMsg(error,"fr"),true)}
     d.close();toast("Saisie corrigée");reloadData();
   };
+}
+/* journal des modifications (maj-07) : qui a saisi ou corrigé quoi, et quand */
+async function loadJournal(date,sid){
+  const box=document.getElementById("e-journal");if(!box)return;
+  const {data,error}=await sb.from("journal_saisies").select("*").eq("date",date).eq("saisonnier_id",Number(sid)).order("quand",{ascending:false}).range(0,59);
+  if(error||!data||!data.length)return; /* pas encore de journal (maj-07 non exécutée) ou rien à montrer */
+  const when=q=>new Intl.DateTimeFormat("fr-FR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}).format(new Date(q));
+  const hrs=(x,a,b,ab)=>x?(x[ab]?"absent":(x[a]?fmtT(x[a])+"–"+fmtT(x[b]):"—")):"—";
+  const line=j=>{const av=j.avant,ap=j.apres;
+    if(j.table_nom==="recoltes"){const l=legById(j.legume_id);const nm=l?l.nom:"Produit retiré";const per=j.periode==="am"?"après-midi":"matin";
+      const u=x=>x?fmtN(Number(x.quantite)):"0";
+      return `${nm} (${per}) : ${j.action==="INSERT"?"ajouté "+u(ap):j.action==="DELETE"?"retiré ("+u(av)+")":u(av)+" → "+u(ap)}`}
+    const parts=[];
+    if(hrs(av,"matin_debut","matin_fin","matin_absent")!==hrs(ap,"matin_debut","matin_fin","matin_absent"))parts.push("matin "+hrs(av,"matin_debut","matin_fin","matin_absent")+" → "+hrs(ap,"matin_debut","matin_fin","matin_absent"));
+    if(hrs(av,"am_debut","am_fin","am_absent")!==hrs(ap,"am_debut","am_fin","am_absent"))parts.push("après-midi "+hrs(av,"am_debut","am_fin","am_absent")+" → "+hrs(ap,"am_debut","am_fin","am_absent"));
+    return "Horaires : "+(parts.join(" · ")||"inchangés")};
+  const rows=data.map(j=>({j,t:line(j)})).filter(x=>!/inchangés$/.test(x.t));if(!rows.length)return;
+  document.getElementById("e-jl").innerHTML=rows.map(({j,t})=>`<div><span class="muted">${esc(when(j.quand))} · ${esc(parName(j.par))}</span><br>${esc(t)}</div>`).join("");
+  box.hidden=false;
 }
 /* ---------- suppression définitive d'un saisonnier ---------- */
 function openDelS(id){
@@ -1201,8 +1320,9 @@ function openShare(){
     const who=d.querySelector("#sh-who").value;const url=appUrl()+(who?"?u="+encodeURIComponent(who):"");
     d.querySelector("#sh-url").value=url;
     const box=d.querySelector("#sh-qr");
-    if(window.qrcode){const qr=qrcode(0,"M");qr.addData(url);qr.make();box.innerHTML=qr.createSvgTag({cellSize:6,margin:2,scalable:true})}
-    else box.textContent="QR code indisponible : utilisez le lien.";
+    const draw=()=>{const qr=qrcode(0,"M");qr.addData(url);qr.make();box.innerHTML=qr.createSvgTag({cellSize:6,margin:2,scalable:true})};
+    if(window.qrcode)draw();
+    else{box.textContent="Chargement du QR code…";loadScript(LIB.qr).then(draw).catch(()=>{box.textContent="QR code indisponible : utilisez le lien."})}
     d.querySelector("#sh-help").textContent=who?"L'identifiant « "+who+" » sera déjà rempli. Donnez le mot de passe à la personne de vive voix.":"La personne se connecte avec l'identifiant et le mot de passe créés dans l'onglet Équipe.";
   };
   d.querySelector("#sh-who").onchange=upd;upd();
@@ -1244,18 +1364,33 @@ function saveBlob(name,blob){
   const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
   toast("Fichier téléchargé : "+name);
 }
-function doXlsx(){
-  if(!window.XLSX)return toast("Module Excel non chargé. Utilisez l'export CSV.",true);
+/* Export Excel (xlsx-js-style : même fonctionnement que SheetJS, avec les couleurs de cellule).
+   Dates en vraies dates Excel ; dimanches en orange ; en-têtes en vert. */
+async function doXlsx(){
+  if(!window.XLSX){toast("Préparation du fichier Excel…");try{await loadScript(LIB.xlsx)}catch(e){return toast("Module Excel non chargé (connexion ?). Utilisez l'export CSV.",true)}}
   const R=exportRows();const wb=XLSX.utils.book_new();
-  const head=[["SCEA Guidal · Paie des saisonniers"],["Période : "+periodLabel()+" ("+R.a+" au "+R.b+")"],[]];
+  const HEAD={font:{bold:true,color:{rgb:"F2EFE6"}},fill:{fgColor:{rgb:"1E4736"}},alignment:{vertical:"center",wrapText:true}};
+  const SUN={fill:{fgColor:{rgb:"FDE6CC"}},font:{color:{rgb:"9A4A00"},bold:true}};
+  const TOT={font:{bold:true},fill:{fgColor:{rgb:"E9E5D8"}}};
+  const styleRow=(ws,r,ncol,st)=>{for(let c=0;c<ncol;c++){const a=XLSX.utils.encode_cell({r,c});if(!ws[a])ws[a]={t:"s",v:""};ws[a].s=st}};
+  const head=[["SCEA Guidal · Paie des saisonniers"],["Période : "+periodLabel()+" ("+fmtDate(R.a)+" au "+fmtDate(R.b)+")"],[]];
   const ws1=XLSX.utils.aoa_to_sheet(head.concat(R.paie));
   ws1["!cols"]=[{wch:20},{wch:16},...R.paie[0].slice(2).map(()=>({wch:17}))];
+  ws1["A1"].s={font:{bold:true,sz:14,color:{rgb:"1E4736"}}};
+  styleRow(ws1,3,R.paie[0].length,HEAD);styleRow(ws1,3+R.paie.length-1,R.paie[0].length,TOT);
   XLSX.utils.book_append_sheet(wb,ws1,"Paie");
-  const ws2=XLSX.utils.aoa_to_sheet(R.detail);ws2["!cols"]=[{wch:12},{wch:10},{wch:14},{wch:18},{wch:13},{wch:8},{wch:8},{wch:8},{wch:11},{wch:18},{wch:12},{wch:10},{wch:10},{wch:14},{wch:12},{wch:18},{wch:18}];
+  /* Détail : colonne A en vraie date ; ligne entière en orange le dimanche */
+  const det=R.detail.map((r,i)=>i?[parse(r[0]),...r.slice(1)]:r);
+  const ws2=XLSX.utils.aoa_to_sheet(det,{cellDates:true,dateNF:"dd/mm/yyyy"});
+  ws2["!cols"]=[{wch:12},{wch:10},{wch:14},{wch:18},{wch:13},{wch:8},{wch:8},{wch:8},{wch:11},{wch:18},{wch:12},{wch:10},{wch:10},{wch:14},{wch:12},{wch:18},{wch:18}];
+  styleRow(ws2,0,det[0].length,HEAD);
+  R.detail.forEach((r,i)=>{if(!i)return;const a=XLSX.utils.encode_cell({r:i,c:0});ws2[a].z="dd/mm/yyyy";if(isSun(r[0]))styleRow(ws2,i,det[0].length,SUN)});
+  ws2["!autofilter"]={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:det.length-1,c:det[0].length-1}})};
   XLSX.utils.book_append_sheet(wb,ws2,"Détail");
   const ws3=XLSX.utils.aoa_to_sheet(R.tarifs);ws3["!cols"]=[{wch:20},{wch:18},{wch:14},{wch:16},{wch:12},{wch:14},{wch:12}];
+  styleRow(ws3,0,R.tarifs[0].length,HEAD);
   XLSX.utils.book_append_sheet(wb,ws3,"Tarifs");
-  const buf=XLSX.write(wb,{bookType:"xlsx",type:"array"});
+  const buf=XLSX.write(wb,{bookType:"xlsx",type:"array",cellStyles:true});
   saveBlob("Recoltes_SCEA-Guidal_"+R.tag+".xlsx",new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));
 }
 function doCsv(){
@@ -1266,6 +1401,7 @@ function doCsv(){
 
 /* ---------- navigation : le bouton « retour » du téléphone ramène à la liste au lieu de quitter l'app ---------- */
 function closeFiche(){
+  try{sessionStorage.removeItem(BKEY)}catch(e){}
   S.selected=null;S.prefilled=false;S.halfOk="";S.bigOk="";render();
   try{if(history.state&&history.state.g==="fiche")history.back()}catch(e){}
 }
@@ -1274,7 +1410,7 @@ window.addEventListener("popstate",()=>{
   if(d.open){d.close();return}
   if(S.selected){S.selected=null;S.prefilled=false;S.halfOk="";S.bigOk="";render();window.scrollTo(0,0)}
 });
-document.addEventListener("toggle",e=>{if(e.target&&e.target.id==="qdet")S.qOpen=e.target.open},true);
+document.addEventListener("toggle",e=>{const id=e.target&&e.target.id;if(id==="qdet")S.qOpen=e.target.open;},true);
 
 /* ---------- actions ---------- */
 async function run(p,okMsg){const {error}=await p;if(error){toast(errMsg(error),true);return false}if(okMsg)toast(okMsg);return true}
@@ -1329,6 +1465,7 @@ document.addEventListener("click",async e=>{
     if(S.selected&&isDirty()&&S.halfOk!==t.dataset.shalf){S.halfOk=t.dataset.shalf;return toast(T("switchHalf",T("halfOf",S.shalf)),true)}
     S.halfOk="";S.shalf=t.dataset.shalf;S.shalfAuto=false;if(S.selected)loadDraft();render();return}
   if(t.dataset.half){S.half=t.dataset.half;render();return}
+  if(t.dataset.qdel){queueSave(queueAll().filter(x=>x.key!==t.dataset.qdel));S.day=null;loadDay();return}
   if(t.dataset.step){const id=t.dataset.leg;const cur=num(S.draft[id]);const v=Math.max(0,Math.round(((cur>0?cur:0)+Number(t.dataset.step))*100)/100);S.draft[id]=v||"";S.bigOk="";const inp=document.getElementById("q-"+id);if(inp)inp.value=fmtIn(S.draft[id]);updMeter();return}
   if(t.dataset.period){S.period=t.dataset.period;loadRange();return}
   if(t.dataset.sfilter){S.sFilter=t.dataset.sfilter;render();return}
@@ -1348,16 +1485,19 @@ document.addEventListener("click",async e=>{
     case "share":openShare();break;
     case "cfg-cancel":S.editCfg=null;render();break;
     case "back":closeFiche();break;
+    case "flush":flushQueue();break;
     case "retry":S.netErr=false;S.booting=true;render();{const ss=S.session;S.session=null;onSession(ss)}break;
     case "same-h":{const x=lastHours(S.shalf);if(!x)break;S.hd=x;S.prefilled=true;render();break}
-    case "absent":S.absent=!S.absent;render();break;
+    case "absent":S.absent=!S.absent;saveBrouillon();render();break;
     case "clear":{
       if(!t.dataset.confirm){t.dataset.confirm="1";t.textContent=T("clearConfirm");return}
       const st=halfState((S.day||{})[S.selected],S.shalf);const q={};
       for(const l of S.legumes)q[l.id]=0;if(st)for(const k in st.q)q[k]=0;
       t.disabled=true;
-      const {error}=await sb.rpc("enregistrer_demi_journee",{p_date:S.date,p_saisonnier:Number(S.selected),p_periode:S.shalf,p_debut:null,p_fin:null,p_absent:false,p_quantites:q});
-      if(error){toast(errMsg(error),true);t.disabled=false;return}
+      const args={p_date:S.date,p_saisonnier:Number(S.selected),p_periode:S.shalf,p_debut:null,p_fin:null,p_absent:false,p_quantites:q};
+      const {error}=await sb.rpc("enregistrer_demi_journee",args);
+      if(error&&isNetErr(error)){enqueue(args);S.offline=true;S.day=overlayQueue(S.day||{})}
+      else if(error){toast(errMsg(error),true);t.disabled=false;return}
       const n=personName(S.selected);closeFiche();toast(T("cleared")+" · "+n);reloadData();window.scrollTo(0,0);break}
     case "validate":{
       if(S.sending)return;
@@ -1380,11 +1520,15 @@ document.addEventListener("click",async e=>{
       if(!S.absent){const big=activeLegumes().find(l=>{const n=q[l.id];return n>0&&((l.mode==="colis"&&(n>100||n%1))||(l.mode==="unite"&&n>3000))});
         if(big){const key=big.id+":"+q[big.id];if(S.bigOk!==key){S.bigOk=key;const n=q[big.id];return toast(T("bigQ",fmtN(n),unitShort(big.mode,n,S.lang),lname(big)),true)}}}
       S.sending=true;render();
-      const {error}=await sb.rpc("enregistrer_demi_journee",{p_date:S.date,p_saisonnier:Number(S.selected),p_periode:H,p_debut:S.absent?null:(hd.d||null),p_fin:S.absent?null:(hd.f||null),p_absent:S.absent,p_quantites:S.absent?{}:q});
+      const args={p_date:S.date,p_saisonnier:Number(S.selected),p_periode:H,p_debut:S.absent?null:(hd.d||null),p_fin:S.absent?null:(hd.f||null),p_absent:S.absent,p_quantites:S.absent?{}:q};
+      const {error}=await sb.rpc("enregistrer_demi_journee",args);
       S.sending=false;
-      if(error){render();return toast(errMsg(error),true)}
+      const queued=error&&isNetErr(error);
+      if(error&&!queued){render();return toast(errMsg(error),true)}
+      if(queued){enqueue(args);S.offline=true;S.day=overlayQueue(S.day||{})}
       if(!S.absent&&span(hd.d,hd.f))rememberHours(H,hd);
-      const n=personName(S.selected);S.search="";closeFiche();toast(T("saved")+" · "+n);reloadData();window.scrollTo(0,0);break}
+      const n=personName(S.selected);S.search="";closeFiche();
+      toast(queued?T("queued")+" · "+n:T("saved")+" · "+n);if(!queued)reloadData();window.scrollTo(0,0);break}
     case "prev":shiftPeriod(-1);break;
     case "next":shiftPeriod(1);break;
     case "now":S.anchor=today();loadRange();break;
@@ -1396,8 +1540,8 @@ document.addEventListener("input",e=>{
   const t=e.target;
   if(t.id==="f-search"){S.search=t.value;render()}
   else if(t.id==="f-ssearch"){S.sSearch=t.value;render()}
-  else if(t.dataset&&t.dataset.q){S.draft[t.dataset.q]=t.value;S.bigOk="";updMeter()}
-  else if(t.dataset&&t.dataset.h){S.hd[t.dataset.h]=t.value;S.prefilled=false;const pn=document.getElementById("prefill-note");if(pn)pn.hidden=true;if(t.value){t.classList.remove("err");const m=document.getElementById("h-msg");if(m&&S.hd.d&&S.hd.f)m.hidden=true}updMeter()}
+  else if(t.dataset&&t.dataset.q){S.draft[t.dataset.q]=t.value;S.bigOk="";updMeter();saveBrouillon()}
+  else if(t.dataset&&t.dataset.h){S.hd[t.dataset.h]=t.value;S.prefilled=false;saveBrouillon();const pn=document.getElementById("prefill-note");if(pn)pn.hidden=true;if(t.value){t.classList.remove("err");const m=document.getElementById("h-msg");if(m&&S.hd.d&&S.hd.f)m.hidden=true}updMeter()}
   else if(t.dataset&&"keep" in t.dataset){S.form[t.id]=t.value}
 });
 document.addEventListener("change",e=>{
@@ -1472,6 +1616,8 @@ document.addEventListener("submit",async e=>{
 });
 
 /* ---------- démarrage ---------- */
+if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostname==="localhost"))
+  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 document.documentElement.lang=S.lang;
 render();
 if(sb){

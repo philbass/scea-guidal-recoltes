@@ -9,7 +9,8 @@ Contenu du dossier :
 | `app/` | L'application publiée sur GitHub Pages (page, logo, réglages) |
 | `.github/workflows/pages.yml` | La publication automatique sur GitHub Pages |
 | `app/config.js` | Le seul fichier à modifier : adresse et clé Supabase |
-| `supabase/schema.sql` | La base de données à créer dans Supabase |
+| `supabase/schema-complet.sql` | La base de données complète, pour une **nouvelle** installation |
+| `supabase/maj-0N-….sql` | Les mises à jour, pour une base **déjà** installée |
 
 ---
 
@@ -25,12 +26,10 @@ Contenu du dossier :
 ## Étape 2 — Créer la base de données
 
 1. Dans le menu de gauche : **SQL Editor** → **New query**.
-2. Ouvrez le fichier `supabase/schema.sql` avec le Bloc-notes, copiez **tout** le contenu et collez-le.
+2. Ouvrez le fichier `supabase/schema-complet.sql` avec le Bloc-notes, copiez **tout** le contenu et collez-le.
 3. Cliquez sur **Run**. Le message attendu est *Success. No rows returned*.
 
-Cela crée les tables (saisonniers, produits, récoltes, comptes) et les droits d'accès.
-
-4. Faites de même, dans l'ordre, avec `supabase/maj-01-identifiant.sql`, `supabase/maj-02-paie.sql` (horaires, modes de paie, tarifs, SMIC et les 17 produits), `supabase/maj-03-suppression-saisonnier.sql`, `supabase/maj-04-bottes-par-colis.sql`, `supabase/maj-05-demi-journees.sql`, puis `supabase/maj-06-securite-et-controles.sql`.
+Cela crée en une fois toute la base à jour : tables (saisonniers, 17 produits, récoltes, horaires, tarifs, SMIC, comptes, journal), contrôles et droits d'accès. Les fichiers `maj-…` ne servent pas pour une nouvelle installation.
 
 ## Étape 3 — Régler la connexion
 
@@ -108,6 +107,8 @@ Certaines évolutions de l'app demandent d'ajouter une fonction dans Supabase. L
 
 | `maj-06-securite-et-controles.sql` | Comptes créés seulement depuis une invitation récente de l'onglet Équipe ; « aujourd'hui » calculé à l'heure de Paris ; contrôles des saisies par la base (pas de date future, pas de quantité négative, horaires obligatoires) ; correction d'une journée en une seule opération ; nombre de bottes par colis daté avec le prix (le changer ne modifie plus la paie passée) | Toujours, après `maj-05`. N'efface aucune saisie (supprime seulement les invitations de compte restées en attente). L'app fonctionne avant et après : à exécuter dès que possible. Peut être relancé sans risque. |
 
+| `maj-07-journal.sql` | Journal des modifications : chaque saisie, correction ou suppression est notée (quand, par qui, avant / après), visible par le responsable dans « Corriger la saisie » | Après `maj-06`. N'efface rien. L'app fonctionne avant et après. Peut être relancé sans risque. |
+
 Exécutez les fichiers dans l'ordre de leur numéro.
 
 `maj-02` est protégé : s'il a déjà été exécuté, il s'arrête avec un message sans rien effacer. Avant chaque mise à jour de la base, faites par précaution un export Excel du mois en cours (onglet **Supervision**).
@@ -121,6 +122,12 @@ Pour essayer une nouvelle version sur l'ordinateur avant de la publier, sans tou
 3. Choisissez « responsable » ou « chef d'équipe ». Les données sont fictives et restent dans ce navigateur. Le bouton **Réinitialiser la démo** les remet à zéro.
 
 Sans `?demo` dans l'adresse, la version locale se connecte à la vraie base.
+
+## Sans réseau aux champs
+
+Une fois ouverte au moins une fois avec du réseau, l'app s'ouvre aussi sans réseau. Les saisies validées sans réseau sont gardées sur le téléphone (badge « En attente d'envoi ») et envoyées automatiquement dès le retour du réseau. Le bouton **Envoyer maintenant** force l'envoi. Si le serveur refuse une saisie en attente (date hors période, par exemple), elle reste affichée avec le motif et un bouton **Supprimer**.
+
+Ne videz pas les données du navigateur du téléphone tant qu'il reste des saisies en attente.
 
 ## Installer l'app sur le téléphone
 
@@ -159,3 +166,12 @@ Ces règles sont appliquées par la base de données elle-même, pas seulement p
 | Les nouvelles saisies n'apparaissent pas toutes seules | Supabase → **Database** → **Publications** → `supabase_realtime` : vérifier que `recoltes` et `presences` sont cochés |
 
 **Projet gratuit Supabase** : il se met en pause après 7 jours sans aucune utilisation. Pendant la saison, l'usage quotidien l'évite. Après une longue pause, il suffit de le relancer depuis le tableau de bord Supabase (**Restore project**).
+
+## Check-list de début de saison
+
+1. Ouvrir https://supabase.com : si le projet est en pause, cliquer **Restore project** et attendre qu'il soit prêt (quelques minutes).
+2. Se connecter à l'app comme responsable et vérifier que le tableau de bord s'affiche.
+3. **Produits et tarifs** : mettre à jour les prix et le SMIC « à partir du » premier jour de la saison.
+4. **Saisonniers** : réactiver ceux qui reviennent, ajouter les nouveaux, marquer partis les autres.
+5. **Équipe** : vérifier les comptes des chefs d'équipe (désactiver ceux qui ne reviennent pas).
+6. Sur chaque téléphone de chef : ouvrir l'app une fois avec du réseau (pour qu'elle fonctionne ensuite sans réseau) et faire une saisie d'essai, effacée ensuite.
